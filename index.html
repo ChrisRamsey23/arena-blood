@@ -52,13 +52,11 @@
   <div class="creation-grid">
     <div class="creation-form">
       <h2 class="section-head">FORGE YOUR WARRIOR</h2>
-
       <div class="field-row">
         <label class="field-lbl">GLADIATOR NAME</label>
         <input id="inp-name" class="text-input" type="text" maxlength="22" placeholder="Enter name..."/>
         <div id="name-err" class="err-msg"></div>
       </div>
-
       <div class="field-row">
         <label class="field-lbl">GENDER</label>
         <div class="cg" id="cg-gender">
@@ -66,7 +64,6 @@
           <button class="cbtn" data-v="female">♀ FEMALE</button>
         </div>
       </div>
-
       <div class="field-row">
         <label class="field-lbl">SKIN TONE</label>
         <div class="cg" id="cg-skin">
@@ -77,33 +74,23 @@
           <button class="cbtn skin-swatch" data-v="deep"   style="--sc:#4A2C0A"></button>
         </div>
       </div>
-
       <div class="field-row">
         <label class="field-lbl">CLASS</label>
         <div class="cg col" id="cg-style">
-          <button class="cbtn active" data-v="retiarius" data-tip="Swift net-fighter. Ranged focus, high speed.">
-            RETIARIUS — Net &amp; Trident
-          </button>
-          <button class="cbtn" data-v="secutor" data-tip="Balanced sword &amp; shield. Reliable all-rounder.">
-            SECUTOR — Sword &amp; Shield
-          </button>
-          <button class="cbtn" data-v="murmillo" data-tip="Heavy axeman. Highest attack, lower speed.">
-            MURMILLO — Heavy Axe
-          </button>
+          <button class="cbtn active" data-v="retiarius" data-tip="Swift net-fighter. Ranged focus, high speed.">RETIARIUS — Net &amp; Trident</button>
+          <button class="cbtn" data-v="secutor" data-tip="Balanced sword &amp; shield. Reliable all-rounder.">SECUTOR — Sword &amp; Shield</button>
+          <button class="cbtn" data-v="murmillo" data-tip="Heavy axeman. Highest attack, lower speed.">MURMILLO — Heavy Axe</button>
         </div>
         <div class="style-tip" id="style-tip">Swift net-fighter. Ranged focus, high speed.</div>
       </div>
-
       <div class="stat-preview">
         <div class="sp-row"><span class="sp-lbl">HP</span>  <div class="sp-bar"><div class="sp-fill" id="spf-hp"  style="--w:45%"></div></div></div>
         <div class="sp-row"><span class="sp-lbl">ATK</span> <div class="sp-bar"><div class="sp-fill" id="spf-atk" style="--w:70%"></div></div></div>
         <div class="sp-row"><span class="sp-lbl">DEF</span> <div class="sp-bar"><div class="sp-fill" id="spf-def" style="--w:30%"></div></div></div>
         <div class="sp-row"><span class="sp-lbl">SPD</span> <div class="sp-bar"><div class="sp-fill" id="spf-spd" style="--w:90%"></div></div></div>
       </div>
-
       <button class="btn-gold full" id="btn-create">ENTER THE ARENA</button>
     </div>
-
     <div class="creation-avatar-col">
       <div class="avatar-frame large">
         <canvas id="cv-create" width="154" height="252" class="pxl"></canvas>
@@ -133,9 +120,7 @@
     <span id="cb-day" class="cb-day"></span>
     <span id="cb-turn" class="cb-turn">Turn 1</span>
   </div>
-
   <div class="combat-row">
-    <!-- Player side -->
     <div class="fighter-panel player-side">
       <div class="fighter-avatar">
         <canvas id="cv-combat" width="110" height="180" class="pxl"></canvas>
@@ -150,10 +135,7 @@
       </div>
       <div class="status-chips" id="cb-pstatus"></div>
     </div>
-
-    <!-- Center arena -->
     <div class="arena-mid">
-      <!-- Distance meter -->
       <div class="dist-box">
         <div class="dist-hdr">DISTANCE</div>
         <div class="dist-ruler" id="dist-ruler">
@@ -168,15 +150,11 @@
         <div class="dist-big" id="dist-big">10 ft</div>
         <div class="dist-hint" id="dist-hint"></div>
       </div>
-
-      <!-- Log -->
       <div class="log-box">
         <div class="log-hdr">BATTLE LOG</div>
         <div class="log-body" id="log-body"></div>
       </div>
     </div>
-
-    <!-- Enemy side -->
     <div class="fighter-panel enemy-side">
       <div class="fighter-avatar enemy-avatar-wrap" id="enemy-sprite-wrap">
         <img id="cb-esprite" src="" alt="enemy" class="enemy-sprite pxl"/>
@@ -192,8 +170,6 @@
       <div class="status-chips" id="cb-estatus"></div>
     </div>
   </div>
-
-  <!-- Action bar -->
   <div class="action-bar" id="action-bar">
     <div class="action-row">
       <button class="abtn" id="ab-attack"  onclick="UI.onAction('attack')">
@@ -222,8 +198,6 @@
       </button>
     </div>
   </div>
-
-  <!-- Item overlay -->
   <div class="overlay hidden" id="ov-item">
     <div class="ov-box">
       <div class="ov-title">SELECT ITEM</div>
@@ -231,8 +205,6 @@
       <button class="btn-dim sm mt8" onclick="UI.closeItemOverlay()">CANCEL</button>
     </div>
   </div>
-
-  <!-- Mercy overlay -->
   <div class="overlay hidden" id="ov-mercy">
     <div class="ov-box mercy-box">
       <div class="mercy-thumb" id="mercy-thumb"></div>
@@ -244,29 +216,23 @@
 <!-- ═══════════════════════════ POST BATTLE ═══════════════════════════ -->
 <div id="screen-post" class="screen">
   <div class="post-grid">
-    <!-- Left: result + heal -->
     <div class="post-panel">
       <div id="post-result" class="result-banner"></div>
       <div id="post-rewards" class="post-rewards"></div>
-
       <div class="panel-title mt8">⚕ MEDICUS</div>
       <div id="post-hpinfo" class="dim-txt"></div>
       <div class="heal-btns">
         <button class="btn-gold" id="btn-heal-sm">HEAL +40 HP (30g)</button>
         <button class="btn-gold" id="btn-heal-full">FULL RESTORE</button>
       </div>
-
       <button class="btn-gold full mt8" id="btn-post-continue">CONTINUE →</button>
     </div>
-
-    <!-- Right: store + sell -->
     <div class="post-panel">
       <div class="panel-title">🏪 THE ARMOURY</div>
       <div id="post-gold" class="gold-display"></div>
       <div class="shop-scroll">
         <div id="shop-items" class="shop-list"></div>
       </div>
-
       <div class="panel-title mt8">💰 SELL ITEMS</div>
       <div class="shop-scroll short">
         <div id="sell-items" class="shop-list"></div>
