@@ -72,8 +72,8 @@ function getShopStock(level) {
   const tier = level >= 7 ? 4 : level >= 5 ? 3 : level >= 3 ? 2 : 1;
   const always = ['health_potion','great_potion','str_draught'];
   const byTier = {
-    1: ['leather_vest','wooden_shield','sandals','iron_helm','throwing_knife'],
-    2: ['short_sword','gladius','chain_mail','iron_shield','iron_greaves','bronze_galea','short_bow','trident','elixir'],
+    1: ['short_sword','leather_vest','wooden_shield','sandals','iron_helm','throwing_knife'],
+    2: ['gladius','chain_mail','iron_shield','iron_greaves','bronze_galea','short_bow','trident','elixir'],
     3: ['battle_axe','war_hammer','lorica_segm','scutum','roman_greaves','imperial_helm','longbow','roman_pilum'],
     4: ['champions_blade','death_scythe','plate_armor','tower_shield','hermes_boots','centurion_helm','siege_bolt'],
   };
