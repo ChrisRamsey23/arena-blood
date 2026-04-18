@@ -13,16 +13,24 @@
 <!-- ═══════════════════════════ MAIN MENU ═══════════════════════════ -->
 <div id="screen-menu" class="screen active">
   <div class="menu-bg"></div>
-  <div class="menu-wrap">
-    <div class="menu-crest">⚔</div>
-    <h1 class="game-title">ARENA BLOOD</h1>
-    <p class="game-sub">GLADIATOR CHRONICLES · VOL. III</p>
-    <div class="menu-btns">
-      <button class="mbtn mbtn-primary" id="btn-play">▶ ENTER THE ARENA</button>
-      <button class="mbtn" id="btn-hall">🏛 HALL OF LEGENDS</button>
-      <button class="mbtn" id="btn-howto">📜 HOW TO FIGHT</button>
+  <div class="menu-row">
+    <div class="menu-sprite-slot">
+      <img id="menu-sprite-left" src="" alt="" class="menu-sprite menu-sprite-flip pxl"/>
     </div>
-    <div class="save-badge" id="save-badge"></div>
+    <div class="menu-wrap">
+      <div class="menu-crest">⚔</div>
+      <h1 class="game-title">ARENA BLOOD</h1>
+      <p class="game-sub">GLADIATOR CHRONICLES · VOL. III</p>
+      <div class="menu-btns">
+        <button class="mbtn mbtn-primary" id="btn-play">▶ ENTER THE ARENA</button>
+        <button class="mbtn" id="btn-hall">🏛 HALL OF LEGENDS</button>
+        <button class="mbtn" id="btn-howto">📜 HOW TO FIGHT</button>
+      </div>
+      <div class="save-badge" id="save-badge"></div>
+    </div>
+    <div class="menu-sprite-slot">
+      <img id="menu-sprite-right" src="" alt="" class="menu-sprite pxl"/>
+    </div>
   </div>
 </div>
 
@@ -98,7 +106,7 @@
 
     <div class="creation-avatar-col">
       <div class="avatar-frame large">
-        <canvas id="cv-create" width="192" height="96" class="pxl"></canvas>
+        <canvas id="cv-create" width="154" height="252" class="pxl"></canvas>
         <div class="avatar-caption">YOUR GLADIATOR</div>
       </div>
     </div>
@@ -130,7 +138,7 @@
     <!-- Player side -->
     <div class="fighter-panel player-side">
       <div class="fighter-avatar">
-        <canvas id="cv-combat" width="192" height="96" class="pxl"></canvas>
+        <canvas id="cv-combat" width="110" height="180" class="pxl"></canvas>
       </div>
       <div class="fighter-meta">
         <div class="fighter-name" id="cb-pname">—</div>
@@ -276,7 +284,7 @@
       <div id="inv-equip" class="equip-list"></div>
     </div>
     <div class="inv-panel center-col">
-      <canvas id="cv-inv" width="192" height="96" class="pxl" style="margin:0 auto;display:block;"></canvas>
+      <canvas id="cv-inv" width="132" height="216" class="pxl" style="margin:0 auto;display:block;"></canvas>
       <div id="inv-stats" class="inv-stats"></div>
     </div>
     <div class="inv-panel">

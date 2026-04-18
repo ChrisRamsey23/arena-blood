@@ -116,6 +116,7 @@ html, body {
 #screen-menu {
   justify-content: center;
   background: radial-gradient(ellipse at 50% 35%, rgba(200,148,28,0.07) 0%, transparent 65%), var(--bg0);
+  overflow: hidden;
 }
 .menu-bg {
   position: absolute; inset: 0; pointer-events: none; z-index: 0;
@@ -124,10 +125,36 @@ html, body {
     transparent 1px, transparent 10px
   );
 }
+.menu-row {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; width: 100%;
+}
+.menu-sprite-slot {
+  flex: 0 0 500px; width: 500px; height: 500px;
+  display: flex; align-items: flex-end; justify-content: center;
+  pointer-events: none;
+}
+.menu-sprite {
+  width: 500px; height: 500px;
+  object-fit: contain;
+  opacity: 0.92;
+  filter: drop-shadow(0 0 18px rgba(200,148,28,0.18));
+}
+.menu-sprite-flip {
+  transform: scaleX(-1);
+}
+@media (max-width: 1100px) {
+  .menu-sprite-slot { flex: 0 0 300px; width: 300px; height: 300px; }
+  .menu-sprite       { width: 300px; height: 300px; }
+}
+@media (max-width: 760px) {
+  .menu-sprite-slot { display: none; }
+}
 .menu-wrap {
   position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  max-width: 440px; width: 100%;
+  max-width: 440px; width: 100%; flex-shrink: 0;
 }
 .menu-crest {
   font-size: 54px;
@@ -268,7 +295,7 @@ html, body {
 .ecard:hover { border-color: var(--gd); transform: translateY(-3px); box-shadow: 0 0 14px rgba(200,148,28,0.12); }
 .ecard:hover::before { background: var(--gd); }
 .ecard-sprite { text-align: center; margin-bottom: 6px; }
-.ecard-sprite img { height: 64px; width: auto; image-rendering: pixelated; }
+.ecard-sprite img { height: 144px; width: auto; image-rendering: pixelated; }
 .ecard-name { font-family: var(--fh); font-size: 9px; color: var(--gd2); letter-spacing: 1px; text-align: center; margin-bottom: 6px; }
 .ecard-stats { font-size: 14px; color: var(--tx1); text-align: center; line-height: 1.7; }
 .ecard-reward { font-size: 13px; color: var(--tx2); text-align: center; margin-top: 7px; padding-top: 7px; border-top: var(--br); }
@@ -315,7 +342,7 @@ html, body {
 .cb-turn { font-family: var(--fh); font-size: 10px; color: var(--gd2); letter-spacing: 2px; }
 
 .combat-row {
-  display: grid; grid-template-columns: 200px 1fr 200px;
+  display: grid; grid-template-columns: 220px 1fr 220px;
   gap: 8px; width: 100%; max-width: 900px; margin-bottom: 7px;
 }
 @media (max-width: 680px) { .combat-row { grid-template-columns: 1fr; } }
@@ -325,10 +352,10 @@ html, body {
   padding: 9px; display: flex; flex-direction: column; align-items: center; gap: 5px;
 }
 .player-side { border-color: var(--gd); }
-.fighter-avatar { display: flex; justify-content: center; }
+.fighter-avatar { display: flex; justify-content: center; overflow: visible; }
 .fighter-avatar canvas { display: block; }
 .enemy-avatar-wrap { display: flex; justify-content: center; align-items: center; }
-.enemy-sprite { height: 64px; max-width: 100%; }
+.enemy-sprite { height: 144px; max-width: 100%; }
 
 .fighter-meta { width: 100%; text-align: center; }
 .fighter-name  { font-family: var(--fh); font-size: 8px; color: var(--tx0); letter-spacing: 1px; }
@@ -541,6 +568,7 @@ html, body {
 .hall-tbl .r3 td { color: #CD7F32; }
 .fate-dead    { color: var(--rd2) !important; }
 .fate-retired { color: var(--gr3) !important; }
+.fate-active  { color: var(--gd2) !important; font-weight: 600; }
 .hall-empty { font-size: 16px; color: var(--tx2); text-align: center; padding: 24px; font-style: italic; }
 #screen-hall button { width: auto; }
 

@@ -80,10 +80,11 @@ function getShopStock(level) {
     4: ['champions_blade','death_scythe','plate_armor','tower_shield','hermes_boots','centurion_helm','siege_bolt'],
   };
   // Show current tier + 1 tier back (still relevant)
-  let pool = [...always, ...(byTier[1] || [])];
-  if (tier >= 2) pool = [...pool, ...(byTier[2] || [])];
-  if (tier >= 3) pool = [...pool, ...(byTier[3] || [])];
-  if (tier >= 4) pool = [...pool, ...(byTier[4] || [])];
+  let pool = [...always];
+  if (tier == 1) pool = [...pool, ...(byTier[1] || [])];
+  if (tier >= 2) pool = [...pool, ...(byTier[1] || []) , ...(byTier[2] || [])];
+  if (tier >= 3) pool = [...pool, ...(byTier[2] || []) , ...(byTier[3] || [])];
+  if (tier >= 4) pool = [...pool, ...(byTier[3] || []) , ...(byTier[4] || [])];
   // Remove tier-0 gear (already outgrown starters) except consumables
   return pool.filter(id => {
     const it = ITEMS[id];
@@ -98,11 +99,14 @@ function nextTierItem(slot, currentTier) {
 // ── ENEMY POOL ───────────────────────────────────────────────────
 const ENEMY_POOL = [
   // Tier 1
-  {id:'sickly_goblin',    name:'Sickly Goblin',      sprite:'t1_sickly_goblin', tier:1, bHp:55,  atk:12, def:3,  spd:3, prefRange:0,  hasRanged:false, xp:22, gold:14, diff:'easy'},
-  {id:'mangy_dog',        name:'Mangy Dog',           sprite:'t1_mangy_dog',     tier:1, bHp:45,  atk:14, def:2,  spd:5, prefRange:0,  hasRanged:false, xp:18, gold:10, diff:'easy'},
-  {id:'drunk_slave',      name:'Drunk Slave',         sprite:'t1_drunk_slave',   tier:1, bHp:65,  atk:11, def:4,  spd:2, prefRange:0,  hasRanged:false, xp:25, gold:18, diff:'easy'},
-  {id:'street_thug',      name:'Street Thug',         sprite:'t1_street_thug',   tier:1, bHp:70,  atk:15, def:5,  spd:2, prefRange:0,  hasRanged:false, xp:28, gold:20, diff:'avg'},
-  {id:'arena_rat',        name:'Arena Rat',           sprite:'t1_arena_rat',     tier:1, bHp:48,  atk:16, def:2,  spd:6, prefRange:0,  hasRanged:false, xp:24, gold:15, diff:'avg'},
+  {id:'sickly_goblin',    name:'Sickly Goblin',      sprite:'t1_sickly_goblin',  tier:1, bHp:55,  atk:12, def:3,  spd:3, prefRange:0,  hasRanged:false, xp:22, gold:14, diff:'easy'},
+  {id:'mangy_dog',        name:'Mangy Dog',           sprite:'t1_mangy_dog',      tier:1, bHp:45,  atk:14, def:2,  spd:5, prefRange:0,  hasRanged:false, xp:18, gold:10, diff:'easy'},
+  {id:'drunk_slave',      name:'Drunk Slave',         sprite:'t1_drunk_slave',    tier:1, bHp:65,  atk:11, def:4,  spd:2, prefRange:0,  hasRanged:false, xp:25, gold:18, diff:'easy'},
+  {id:'lame_beggar',      name:'Lame Beggar',         sprite:'t1_lame_beggar',    tier:1, bHp:38,  atk:10, def:1,  spd:2, prefRange:0,  hasRanged:false, xp:16, gold:8,  diff:'easy'},
+  {id:'street_thug',      name:'Street Thug',         sprite:'t1_street_thug',    tier:1, bHp:70,  atk:15, def:5,  spd:2, prefRange:0,  hasRanged:false, xp:28, gold:20, diff:'avg'},
+  {id:'arena_rat',        name:'Arena Rat',           sprite:'t1_arena_rat',      tier:1, bHp:48,  atk:16, def:2,  spd:6, prefRange:0,  hasRanged:false, xp:24, gold:15, diff:'avg'},
+  {id:'mad_dog_gladiator',name:'Mad Dog Gladiator',   sprite:'t1_mad_dog_gladiator',tier:1,bHp:80,  atk:18, def:6,  spd:4, prefRange:0,  hasRanged:false, xp:32, gold:22, diff:'hard'},
+  {id:'starved_hyena',    name:'Starved Hyena',       sprite:'t1_starved_hyena',   tier:1, bHp:72,  atk:20, def:4,  spd:5, prefRange:0,  hasRanged:false, xp:30, gold:20, diff:'hard'},
   // Tier 2
   {id:'tiger_cub',        name:'Tiger Cub',           sprite:'t2_tiger_cub',  tier:2, bHp:90,  atk:18, def:7,  spd:3, prefRange:0,  hasRanged:false, xp:45, gold:35, diff:'easy'},
   {id:'net_fighter',      name:'Net Fighter',         sprite:'t2_net_fighter',   tier:2, bHp:80,  atk:14, def:6,  spd:4, prefRange:30, hasRanged:true,  xp:48, gold:38, diff:'easy'},
@@ -118,9 +122,12 @@ const ENEMY_POOL = [
   {id:'samurai_warrior',  name:'Samurai Warrior',    sprite:'t3_samurai_warrior',   tier:3, bHp:130, atk:28, def:10, spd:6, prefRange:30, hasRanged:true,  xp:92, gold:72, diff:'hard'},
   {id:'wild_elephant',    name:'Wild Elephant',     sprite:'t3_wild_elephant',  tier:3, bHp:180, atk:34, def:16, spd:3, prefRange:0,  hasRanged:false, xp:110,gold:90, diff:'hard'},
   // Tier 4
-  {id:'elite_praetorian', name:'Elite Praetorian',    sprite:'veteran',  tier:4, bHp:220, atk:36, def:22, spd:4, prefRange:0,  hasRanged:false, xp:150,gold:120,diff:'easy'},
-  {id:'shadow_assassin',  name:'Shadow Assassin',     sprite:'archer',   tier:4, bHp:200, atk:44, def:16, spd:8, prefRange:20, hasRanged:true,  xp:170,gold:135,diff:'hard'},
-  {id:'titan_warrior',    name:'Titan Warrior',       sprite:'berserker',tier:4, bHp:320, atk:42, def:24, spd:2, prefRange:0,  hasRanged:false, xp:200,gold:160,diff:'hard'},
+  {id:'elite_praetorian', name:'Elite Praetorian',    sprite:'t4_elite_praetorian',  tier:4, bHp:220, atk:36, def:22, spd:4, prefRange:0,  hasRanged:false, xp:150,gold:120,diff:'easy'},
+  {id:'persian_immortal', name:'Persian Immortal',    sprite:'t4_persian_immortal',  tier:4, bHp:240, atk:38, def:24, spd:3, prefRange:0,  hasRanged:false, xp:160,gold:125,diff:'easy'},
+  {id:'numidian_warlord', name:'Numidian Warlord',    sprite:'t4_numidian_warlord',  tier:4, bHp:270, atk:40, def:20, spd:5, prefRange:30, hasRanged:true,  xp:180,gold:140,diff:'avg'},
+  {id:'greek_champion',   name:'Greek Champion',      sprite:'t4_greek_champion',    tier:4, bHp:260, atk:38, def:22, spd:4, prefRange:0,  hasRanged:false, xp:175,gold:138,diff:'avg'},
+  {id:'shadow_assassin',  name:'Shadow Assassin',     sprite:'t4_shadow_assassin',   tier:4, bHp:200, atk:44, def:16, spd:8, prefRange:20, hasRanged:true,  xp:170,gold:135,diff:'hard'},
+  {id:'titan_warrior',    name:'Titan Warrior',       sprite:'t4_titan_warrior',     tier:4, bHp:320, atk:42, def:24, spd:2, prefRange:0,  hasRanged:false, xp:200,gold:160,diff:'hard'},
 ];
 
 function tierForLevel(level) {
@@ -899,6 +906,20 @@ const UI = {
     } else {
       badge.textContent = 'No active gladiator.';
     }
+    this._randomiseMenuSprites();
+  },
+
+  _randomiseMenuSprites() {
+    // Collect all unique sprites from tiers 1, 2 and 3 only
+    const pool = [...new Set(
+      ENEMY_POOL.filter(e => e.tier >= 1 && e.tier <= 3).map(e => e.sprite)
+    )];
+    // Shuffle and pick two different sprites
+    const shuffled = pool.sort(() => Math.random() - 0.5);
+    const imgL = document.getElementById('menu-sprite-left');
+    const imgR = document.getElementById('menu-sprite-right');
+    if (imgL) imgL.src = `assets/enemies/${shuffled[0]}.png`;
+    if (imgR) imgR.src = `assets/enemies/${shuffled[1]}.png`;
   },
 
   // ── Load prompt ────────────────────────────────────────────
@@ -1049,7 +1070,7 @@ const UI = {
     document.getElementById('cb-elevel').textContent = '';
     const img = document.getElementById('cb-esprite');
     img.src = `assets/enemies/${enemy.sprite}.png`;
-    img.style.height = '64px';
+    img.style.height = '144px';
     document.getElementById('cb-day').textContent = `${player.weekDayName} — Fight ${player.fightNum + 1}`;
     // log-body already cleared in selectEnemy before start() ran
     this.drawAvatar('cv-combat', player);
@@ -1198,7 +1219,13 @@ const UI = {
     const banner = document.getElementById('post-result');
     const rewards = document.getElementById('post-rewards');
 
-    if (result.victory) {
+    // storeOnly visits must never render a battle result — return early
+    // after setting up the armoury header so heal buttons stay safe.
+    if (result.storeOnly) {
+      banner.textContent = '🏪 ARMOURY';
+      banner.className = 'result-banner res-fled';
+      rewards.textContent = 'Browse before your next fight.';
+    } else if (result.victory) {
       banner.textContent = '⚔ VICTORIA! ⚔';
       banner.className = 'result-banner res-win';
       rewards.innerHTML = `
@@ -1382,7 +1409,9 @@ const UI = {
       })();
       const fate = c.status === 'dead'
         ? `<span class="fate-dead">Slain by ${c.killedBy||'?'}</span>`
-        : `<span class="fate-retired">Retired</span>`;
+        : c.status === 'active'
+          ? `<span class="fate-active">Active</span>`
+          : `<span class="fate-retired">Retired</span>`;
       const tr = document.createElement('tr');
       tr.className = i < 3 ? `r${i+1}` : '';
       tr.innerHTML = `
