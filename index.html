@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ARENA BLOOD III</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&family=VT323&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════ MAIN MENU ═══════════════════════════ -->
+<div id="screen-menu" class="screen active">
+  <div class="menu-bg"></div>
+  <div class="menu-wrap">
+    <div class="menu-crest">⚔</div>
+    <h1 class="game-title">ARENA BLOOD</h1>
+    <p class="game-sub">GLADIATOR CHRONICLES · VOL. III</p>
+    <div class="menu-btns">
+      <button class="mbtn mbtn-primary" id="btn-play">▶ ENTER THE ARENA</button>
+      <button class="mbtn" id="btn-hall">🏛 HALL OF LEGENDS</button>
+      <button class="mbtn" id="btn-howto">📜 HOW TO FIGHT</button>
+    </div>
+    <div class="save-badge" id="save-badge"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ LOAD PROMPT ══════════════════════════ -->
+<div id="screen-loadprompt" class="screen">
+  <div class="dialog">
+    <h2 class="dialog-title">⚔ CONTINUE?</h2>
+    <div id="lp-info" class="dialog-info"></div>
+    <div class="dialog-btns">
+      <button class="btn-gold" id="btn-lp-continue">CONTINUE WARRIOR</button>
+      <button class="btn-red" id="btn-lp-new">NEW CHARACTER (retires current)</button>
+      <button class="btn-dim" id="btn-lp-back">← BACK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ CHARACTER CREATION ═══════════════════ -->
+<div id="screen-creation" class="screen">
+  <div class="creation-grid">
+    <div class="creation-form">
+      <h2 class="section-head">FORGE YOUR WARRIOR</h2>
+
+      <div class="field-row">
+        <label class="field-lbl">GLADIATOR NAME</label>
+        <input id="inp-name" class="text-input" type="text" maxlength="22" placeholder="Enter name..."/>
+        <div id="name-err" class="err-msg"></div>
+      </div>
+
+      <div class="field-row">
+        <label class="field-lbl">GENDER</label>
+        <div class="cg" id="cg-gender">
+          <button class="cbtn active" data-v="male">♂ MALE</button>
+          <button class="cbtn" data-v="female">♀ FEMALE</button>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label class="field-lbl">SKIN TONE</label>
+        <div class="cg" id="cg-skin">
+          <button class="cbtn skin-swatch active" data-v="ivory"  style="--sc:#F5DEB3"></button>
+          <button class="cbtn skin-swatch" data-v="tan"    style="--sc:#D2A679"></button>
+          <button class="cbtn skin-swatch" data-v="olive"  style="--sc:#B8864E"></button>
+          <button class="cbtn skin-swatch" data-v="brown"  style="--sc:#8B5E3C"></button>
+          <button class="cbtn skin-swatch" data-v="deep"   style="--sc:#4A2C0A"></button>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label class="field-lbl">CLASS</label>
+        <div class="cg col" id="cg-style">
+          <button class="cbtn active" data-v="retiarius" data-tip="Swift net-fighter. Ranged focus, high speed.">
+            RETIARIUS — Net &amp; Trident
+          </button>
+          <button class="cbtn" data-v="secutor" data-tip="Balanced sword &amp; shield. Reliable all-rounder.">
+            SECUTOR — Sword &amp; Shield
+          </button>
+          <button class="cbtn" data-v="murmillo" data-tip="Heavy axeman. Highest attack, lower speed.">
+            MURMILLO — Heavy Axe
+          </button>
+        </div>
+        <div class="style-tip" id="style-tip">Swift net-fighter. Ranged focus, high speed.</div>
+      </div>
+
+      <div class="stat-preview">
+        <div class="sp-row"><span class="sp-lbl">HP</span>  <div class="sp-bar"><div class="sp-fill" id="spf-hp"  style="--w:45%"></div></div></div>
+        <div class="sp-row"><span class="sp-lbl">ATK</span> <div class="sp-bar"><div class="sp-fill" id="spf-atk" style="--w:70%"></div></div></div>
+        <div class="sp-row"><span class="sp-lbl">DEF</span> <div class="sp-bar"><div class="sp-fill" id="spf-def" style="--w:30%"></div></div></div>
+        <div class="sp-row"><span class="sp-lbl">SPD</span> <div class="sp-bar"><div class="sp-fill" id="spf-spd" style="--w:90%"></div></div></div>
+      </div>
+
+      <button class="btn-gold full" id="btn-create">ENTER THE ARENA</button>
+    </div>
+
+    <div class="creation-avatar-col">
+      <div class="avatar-frame large">
+        <canvas id="cv-create" width="192" height="96" class="pxl"></canvas>
+        <div class="avatar-caption">YOUR GLADIATOR</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ FIGHT SELECTION ═══════════════════════ -->
+<div id="screen-select" class="screen">
+  <div class="select-header">
+    <div id="rw-label" class="rw-label"></div>
+    <div id="sel-hud" class="hud-strip"></div>
+  </div>
+  <div id="sel-body" class="sel-body"></div>
+  <div class="sel-footer">
+    <button class="btn-dim sm" id="btn-sel-inv">⚙ INVENTORY</button>
+    <button class="btn-dim sm" id="btn-sel-store">🏪 STORE</button>
+    <button class="btn-dim sm" id="btn-sel-hall2">🏛 HALL</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ COMBAT ════════════════════════════════ -->
+<div id="screen-combat" class="screen">
+  <div class="combat-topbar">
+    <span id="cb-day" class="cb-day"></span>
+    <span id="cb-turn" class="cb-turn">Turn 1</span>
+  </div>
+
+  <div class="combat-row">
+    <!-- Player side -->
+    <div class="fighter-panel player-side">
+      <div class="fighter-avatar">
+        <canvas id="cv-combat" width="192" height="96" class="pxl"></canvas>
+      </div>
+      <div class="fighter-meta">
+        <div class="fighter-name" id="cb-pname">—</div>
+        <div class="fighter-level" id="cb-plevel">LVL 1</div>
+      </div>
+      <div class="hp-wrap">
+        <div class="hp-track"><div class="hp-fill player-fill" id="cb-php"></div></div>
+        <div class="hp-nums" id="cb-phpn">— / —</div>
+      </div>
+      <div class="status-chips" id="cb-pstatus"></div>
+    </div>
+
+    <!-- Center arena -->
+    <div class="arena-mid">
+      <!-- Distance meter -->
+      <div class="dist-box">
+        <div class="dist-hdr">DISTANCE</div>
+        <div class="dist-ruler" id="dist-ruler">
+          <div class="dist-pip" data-d="0">0</div>
+          <div class="dist-pip" data-d="10">10</div>
+          <div class="dist-pip" data-d="20">20</div>
+          <div class="dist-pip" data-d="30">30</div>
+          <div class="dist-pip" data-d="40">40</div>
+          <div class="dist-pip" data-d="50">50</div>
+          <div class="dist-pip" data-d="60">60</div>
+        </div>
+        <div class="dist-big" id="dist-big">10 ft</div>
+        <div class="dist-hint" id="dist-hint"></div>
+      </div>
+
+      <!-- Log -->
+      <div class="log-box">
+        <div class="log-hdr">BATTLE LOG</div>
+        <div class="log-body" id="log-body"></div>
+      </div>
+    </div>
+
+    <!-- Enemy side -->
+    <div class="fighter-panel enemy-side">
+      <div class="fighter-avatar enemy-avatar-wrap" id="enemy-sprite-wrap">
+        <img id="cb-esprite" src="" alt="enemy" class="enemy-sprite pxl"/>
+      </div>
+      <div class="fighter-meta">
+        <div class="fighter-name" id="cb-ename">—</div>
+        <div class="fighter-level" id="cb-elevel"></div>
+      </div>
+      <div class="hp-wrap">
+        <div class="hp-track"><div class="hp-fill enemy-fill" id="cb-ehp"></div></div>
+        <div class="hp-nums" id="cb-ehpn">— / —</div>
+      </div>
+      <div class="status-chips" id="cb-estatus"></div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar" id="action-bar">
+    <div class="action-row">
+      <button class="abtn" id="ab-attack"  onclick="UI.onAction('attack')">
+        <span class="ab-ico">⚔</span><span class="ab-lbl">ATTACK</span>
+        <span class="ab-sub" id="abn-attack">0 ft only</span>
+      </button>
+      <button class="abtn" id="ab-ranged"  onclick="UI.onAction('ranged')">
+        <span class="ab-ico">🏹</span><span class="ab-lbl">RANGED</span>
+        <span class="ab-sub" id="abn-ranged">&gt;0 ft</span>
+      </button>
+      <button class="abtn" id="ab-advance" onclick="UI.onAction('advance')">
+        <span class="ab-ico">→</span><span class="ab-lbl">ADVANCE</span>
+        <span class="ab-sub">-10 ft</span>
+      </button>
+      <button class="abtn" id="ab-backup"  onclick="UI.onAction('backup')">
+        <span class="ab-ico">←</span><span class="ab-lbl">BACK UP</span>
+        <span class="ab-sub">+10 ft</span>
+      </button>
+      <button class="abtn" id="ab-item"    onclick="UI.onAction('item')">
+        <span class="ab-ico">🧪</span><span class="ab-lbl">USE ITEM</span>
+        <span class="ab-sub" id="abn-item">0 items</span>
+      </button>
+      <button class="abtn mercy-abtn" id="ab-mercy" onclick="UI.onAction('mercy')">
+        <span class="ab-ico">🙏</span><span class="ab-lbl">MERCY!</span>
+        <span class="ab-sub">≤20% HP</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Item overlay -->
+  <div class="overlay hidden" id="ov-item">
+    <div class="ov-box">
+      <div class="ov-title">SELECT ITEM</div>
+      <div id="ov-item-list"></div>
+      <button class="btn-dim sm mt8" onclick="UI.closeItemOverlay()">CANCEL</button>
+    </div>
+  </div>
+
+  <!-- Mercy overlay -->
+  <div class="overlay hidden" id="ov-mercy">
+    <div class="ov-box mercy-box">
+      <div class="mercy-thumb" id="mercy-thumb"></div>
+      <div class="mercy-msg"  id="mercy-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ POST BATTLE ═══════════════════════════ -->
+<div id="screen-post" class="screen">
+  <div class="post-grid">
+    <!-- Left: result + heal -->
+    <div class="post-panel">
+      <div id="post-result" class="result-banner"></div>
+      <div id="post-rewards" class="post-rewards"></div>
+
+      <div class="panel-title mt8">⚕ MEDICUS</div>
+      <div id="post-hpinfo" class="dim-txt"></div>
+      <div class="heal-btns">
+        <button class="btn-gold" id="btn-heal-sm">HEAL +40 HP (30g)</button>
+        <button class="btn-gold" id="btn-heal-full">FULL RESTORE</button>
+      </div>
+
+      <button class="btn-gold full mt8" id="btn-post-continue">CONTINUE →</button>
+    </div>
+
+    <!-- Right: store + sell -->
+    <div class="post-panel">
+      <div class="panel-title">🏪 THE ARMOURY</div>
+      <div id="post-gold" class="gold-display"></div>
+      <div class="shop-scroll">
+        <div id="shop-items" class="shop-list"></div>
+      </div>
+
+      <div class="panel-title mt8">💰 SELL ITEMS</div>
+      <div class="shop-scroll short">
+        <div id="sell-items" class="shop-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ INVENTORY ════════════════════════════ -->
+<div id="screen-inv" class="screen">
+  <h2 class="section-head center">⚙ INVENTORY & EQUIPMENT</h2>
+  <div class="inv-grid">
+    <div class="inv-panel">
+      <div class="panel-title">EQUIPPED</div>
+      <div id="inv-equip" class="equip-list"></div>
+    </div>
+    <div class="inv-panel center-col">
+      <canvas id="cv-inv" width="192" height="96" class="pxl" style="margin:0 auto;display:block;"></canvas>
+      <div id="inv-stats" class="inv-stats"></div>
+    </div>
+    <div class="inv-panel">
+      <div class="panel-title">BAG</div>
+      <div id="inv-bag" class="bag-list"></div>
+    </div>
+  </div>
+  <div class="inv-footer">
+    <div id="inv-gold" class="gold-display"></div>
+    <button class="btn-dim sm" id="btn-inv-back">← BACK</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ HALL ═════════════════════════════════ -->
+<div id="screen-hall" class="screen">
+  <h2 class="section-head center gold">🏛 HALL OF LEGENDS</h2>
+  <p class="hall-sub">The greatest gladiators who ever fought</p>
+  <div class="table-wrap">
+    <table class="hall-tbl" id="hall-tbl">
+      <thead>
+        <tr><th>#</th><th>NAME</th><th>LVL</th><th>KILLS</th><th>BEST ENEMY</th><th>DMG TAKEN</th><th>GOLD</th><th>FATE</th></tr>
+      </thead>
+      <tbody id="hall-body"></tbody>
+    </table>
+    <div id="hall-empty" class="hall-empty">No legends yet. Be the first.</div>
+  </div>
+  <button class="btn-dim sm mt8" id="btn-hall-back">← BACK</button>
+</div>
+
+<!-- ═══════════════════════════ DEATH ════════════════════════════════ -->
+<div id="screen-death" class="screen">
+  <div class="death-wrap">
+    <div class="death-skull">💀</div>
+    <h1 class="death-title">SLAIN</h1>
+    <p class="death-sub" id="death-sub"></p>
+    <div class="death-epitaph" id="death-epitaph"></div>
+    <button class="btn-gold sm" id="btn-death-back">RETURN TO MENU</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ HOW TO PLAY ══════════════════════════ -->
+<div id="screen-howto" class="screen">
+  <h2 class="section-head center gold">📜 HOW TO FIGHT</h2>
+  <div class="howto-grid">
+    <div class="howto-card">
+      <h3>DISTANCE SYSTEM</h3>
+      <p>Combat starts at <b>10 ft</b>. <b>Advance</b> to close gap (-10 ft). <b>Back Up</b> to retreat (+10 ft). <b>Attack</b> requires 0 ft. <b>Ranged</b> works at &gt;0 ft with a ranged weapon equipped.</p>
+    </div>
+    <div class="howto-card">
+      <h3>ROMAN WEEK</h3>
+      <p>Each fight is a day: Lunae → Martis → Mercurii → Iovis → Veneris → ⭐ <b>Saturni Night</b>. The 6th fight is a Prize Fight with a champion gladiator and bonus rewards.</p>
+    </div>
+    <div class="howto-card">
+      <h3>MERCY</h3>
+      <p>When HP drops to ≤20%, the <b>Mercy!</b> button unlocks. 80% chance the Emperor grants mercy. 20% chance of instant execution. Desperate gamble!</p>
+    </div>
+    <div class="howto-card">
+      <h3>ECONOMY</h3>
+      <p>Earn gold from victories. Heal and buy gear after each fight. Sell old gear for 10% value. Unequip items before selling.</p>
+    </div>
+  </div>
+  <button class="btn-dim sm mt8" id="btn-howto-back">← BACK</button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
