@@ -1261,15 +1261,16 @@ const UI = {
   },
 
   _randomiseMenuSprites() {
-    // Pick two distinct enemies from the full enemy pool
-    const pool  = ENEMY_POOL;
-    const first = pool[Math.floor(Math.random() * pool.length)];
-    let second  = pool[Math.floor(Math.random() * pool.length)];
-    while (second.id === first.id) second = pool[Math.floor(Math.random() * pool.length)];
+    // Build pool of all sprite paths: every enemy + every champion number
+    const enemySprites    = ENEMY_POOL.map(e => `assets/enemies/${e.sprite}.png`);
+    const championSprites = Array.from({length: ROMAN_CHAMPION_SPRITES}, (_, i) => `assets/enemies/champion_${i+1}.png`);
+    const pool = [...new Set([...enemySprites, ...championSprites])];
+    // Pick two distinct entries
+    const shuffled = pool.sort(() => Math.random() - 0.5);
     const imgL = document.getElementById('menu-sprite-left');
     const imgR = document.getElementById('menu-sprite-right');
-    if (imgL) imgL.src = `assets/enemies/${first.sprite}.png`;
-    if (imgR) imgR.src = `assets/enemies/${second.sprite}.png`;
+    if (imgL) imgL.src = shuffled[0];
+    if (imgR) imgR.src = shuffled[1];
   },
 
   renderLoadPrompt(c) {
@@ -1417,7 +1418,7 @@ const UI = {
     set('cb-elevel', '');
     set('cb-day',    `${player.weekDayName} — Fight ${player.fightNum+1}`);
     const img = document.getElementById('cb-esprite');
-    if (img) { img.src = `assets/enemies/${enemy.sprite}.png`; img.style.height = enemy.isPrizeFight ? '288px' : '144px'; }
+    if (img) { img.src = `assets/enemies/${enemy.sprite}.png`; const sz = enemy.isPrizeFight ? '288px' : '144px'; img.style.width = sz; img.style.height = sz; img.style.objectFit = 'contain'; }
     this.drawAvatar('cv-combat', player);
     this.refreshCombat();
   },
