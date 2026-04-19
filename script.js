@@ -1416,7 +1416,7 @@ const UI = {
     set('cb-elevel', '');
     set('cb-day',    `${player.weekDayName} — Fight ${player.fightNum+1}`);
     const img = document.getElementById('cb-esprite');
-    if (img) { img.src = `assets/enemies/${enemy.sprite}.png`; img.style.height = '144px'; }
+    if (img) { img.src = `assets/enemies/${enemy.sprite}.png`; img.style.height = enemy.isPrizeFight ? '288px' : '144px'; }
     this.drawAvatar('cv-combat', player);
     this.refreshCombat();
   },
