@@ -482,6 +482,13 @@ html, body {
 }
 .shop-row-info { flex: 1; }
 .shop-row-name { font-family: var(--fh); font-size: 13px; color: var(--tx0); letter-spacing: 1px; margin-bottom: 2px; }
+/* V3.2: slot+tier tag shown inline after item name in shop, sell, and bag */
+.item-slot-tag {
+  display: inline-block; margin-left: 6px;
+  font-family: var(--fh); font-size: 8px; letter-spacing: 1px;
+  color: var(--tx2); background: var(--bg0); border: 1px solid var(--bg4);
+  padding: 1px 5px; vertical-align: middle; white-space: nowrap;
+}
 .shop-row-desc { font-size: 13px; color: var(--tx2); }
 .shop-row-price { font-family: var(--fh); font-size: 13px; color: var(--gd); white-space: nowrap; margin-right: 5px; }
 .btn-buy {

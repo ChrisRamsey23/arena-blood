@@ -1,6 +1,9 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════
-// ARENA BLOOD V3.1 — script.js
+// ARENA BLOOD V3.2 — script.js
+// New: slot+tier labels on inventory/shop items, shop hover tooltips
+//      showing currently-equipped item for that slot.
+//      Prize fight sprite fix: Math.ceil for clean integer filenames.
 // ═══════════════════════════════════════════════════════════════
 
 const SAVE_KEY   = 'arenaBloodV3';
@@ -17,7 +20,6 @@ const SKIN = {
 
 // ── ITEM DATABASE ────────────────────────────────────────────────
 const ITEMS = {
-  // Melee — tiers 0-4
   bare_fists:      {id:'bare_fists',      name:'Bare Fists',         slot:'melee', tier:0, icon:'👊', stats:{atk:2},          desc:'+2 ATK',            price:0,   type:'equipment'},
   rusty_sword:     {id:'rusty_sword',     name:'Rusty Sword',        slot:'melee', tier:1, icon:'🗡', stats:{atk:8},           desc:'+8 ATK',            price:0,   type:'equipment'},
   short_sword:     {id:'short_sword',     name:'Short Sword',        slot:'melee', tier:2, icon:'⚔', stats:{atk:14},          desc:'+14 ATK',           price:90,  type:'equipment'},
@@ -27,7 +29,6 @@ const ITEMS = {
   champions_blade: {id:'champions_blade', name:"Champion's Blade",   slot:'melee', tier:4, icon:'⚔', stats:{atk:32,spd:1},    desc:'+32 ATK +1 SPD',    price:420, type:'equipment'},
   death_scythe:    {id:'death_scythe',    name:'Death Scythe',       slot:'melee', tier:4, icon:'⚔', stats:{atk:38,spd:-1},   desc:'+38 ATK -1 SPD',    price:500, type:'equipment'},
 
-  // Ranged — tiers 1-4
   throwing_knife:  {id:'throwing_knife',  name:'Throwing Knife',     slot:'ranged',tier:1, icon:'🔪', stats:{ratk:10},         desc:'+10 RATK',          price:55,  type:'equipment'},
   short_bow:       {id:'short_bow',       name:'Short Bow',          slot:'ranged',tier:2, icon:'🏹', stats:{ratk:16},         desc:'+16 RATK',          price:110, type:'equipment'},
   trident:         {id:'trident',         name:'Trident',            slot:'ranged',tier:2, icon:'🔱', stats:{ratk:18,atk:6},   desc:'+18 RATK +6 ATK',   price:175, type:'equipment'},
@@ -35,32 +36,27 @@ const ITEMS = {
   roman_pilum:     {id:'roman_pilum',     name:'Roman Pilum',        slot:'ranged',tier:3, icon:'🏹', stats:{ratk:20,atk:8},   desc:'+20 RATK +8 ATK',   price:215, type:'equipment'},
   siege_bolt:      {id:'siege_bolt',      name:'Siege Bolt',         slot:'ranged',tier:4, icon:'🏹', stats:{ratk:30},         desc:'+30 RATK',          price:375, type:'equipment'},
 
-  // Armor — tiers 0-4
   loin_cloth:      {id:'loin_cloth',      name:'Loin Cloth',         slot:'armor', tier:0, icon:'👘', stats:{def:2},           desc:'+2 DEF',            price:0,   type:'equipment'},
   leather_vest:    {id:'leather_vest',    name:'Leather Vest',       slot:'armor', tier:1, icon:'🥋', stats:{def:6},           desc:'+6 DEF',            price:65,  type:'equipment'},
   chain_mail:      {id:'chain_mail',      name:'Chain Mail',         slot:'armor', tier:2, icon:'🛡', stats:{def:11},          desc:'+11 DEF',           price:155, type:'equipment'},
   lorica_segm:     {id:'lorica_segm',     name:'Lorica Segmentata',  slot:'armor', tier:3, icon:'🛡', stats:{def:17},          desc:'+17 DEF',           price:255, type:'equipment'},
   plate_armor:     {id:'plate_armor',     name:'Plate Armor',        slot:'armor', tier:4, icon:'🪖', stats:{def:24,spd:-1},   desc:'+24 DEF -1 SPD',    price:375, type:'equipment'},
 
-  // Helms — tiers 1-4
   iron_helm:       {id:'iron_helm',       name:'Iron Helm',          slot:'helm',  tier:1, icon:'⛑', stats:{def:4,hp:12},     desc:'+4 DEF +12 HP',     price:75,  type:'equipment'},
   bronze_galea:    {id:'bronze_galea',    name:'Bronze Galea',       slot:'helm',  tier:2, icon:'🪖', stats:{def:8,hp:20},     desc:'+8 DEF +20 HP',     price:145, type:'equipment'},
   imperial_helm:   {id:'imperial_helm',   name:'Imperial Helm',      slot:'helm',  tier:3, icon:'👑', stats:{def:13,hp:35},    desc:'+13 DEF +35 HP',    price:235, type:'equipment'},
   centurion_helm:  {id:'centurion_helm',  name:'Centurion Helm',     slot:'helm',  tier:4, icon:'👑', stats:{def:18,hp:50},    desc:'+18 DEF +50 HP',    price:345, type:'equipment'},
 
-  // Shields — tiers 1-4
   wooden_shield:   {id:'wooden_shield',   name:'Wooden Shield',      slot:'shield',tier:1, icon:'🛡', stats:{def:5},           desc:'+5 DEF',            price:45,  type:'equipment'},
   iron_shield:     {id:'iron_shield',     name:'Iron Shield',        slot:'shield',tier:2, icon:'🛡', stats:{def:10,spd:-1},   desc:'+10 DEF -1 SPD',    price:125, type:'equipment'},
   scutum:          {id:'scutum',          name:'Scutum',             slot:'shield',tier:3, icon:'🛡', stats:{def:16,spd:-1},   desc:'+16 DEF -1 SPD',    price:215, type:'equipment'},
   tower_shield:    {id:'tower_shield',    name:'Tower Shield',       slot:'shield',tier:4, icon:'🛡', stats:{def:22,spd:-2},   desc:'+22 DEF -2 SPD',    price:315, type:'equipment'},
 
-  // Boots — tiers 1-4
   sandals:         {id:'sandals',         name:'Sandals',            slot:'boots', tier:1, icon:'👡', stats:{spd:2},           desc:'+2 SPD',            price:38,  type:'equipment'},
   iron_greaves:    {id:'iron_greaves',    name:'Iron Greaves',       slot:'boots', tier:2, icon:'🥾', stats:{spd:1,def:3},     desc:'+1 SPD +3 DEF',     price:95,  type:'equipment'},
   roman_greaves:   {id:'roman_greaves',   name:'Roman Greaves',      slot:'boots', tier:3, icon:'🥾', stats:{spd:2,def:5},     desc:'+2 SPD +5 DEF',     price:175, type:'equipment'},
   hermes_boots:    {id:'hermes_boots',    name:"Hermes' Boots",      slot:'boots', tier:4, icon:'👟', stats:{spd:4,def:3},     desc:'+4 SPD +3 DEF',     price:275, type:'equipment'},
 
-  // Consumables
   health_potion:   {id:'health_potion',   name:'Health Potion',      slot:null, tier:0, icon:'🧪', healAmt:45,  stats:{}, desc:'Restore 45 HP',     price:32,  type:'consumable'},
   great_potion:    {id:'great_potion',    name:'Great Potion',       slot:null, tier:0, icon:'🫙', healAmt:100, stats:{}, desc:'Restore 100 HP',    price:75,  type:'consumable'},
   elixir:          {id:'elixir',          name:'Elixir',             slot:null, tier:0, icon:'💊', healAmt:999, stats:{}, desc:'Full HP restore',   price:155, type:'consumable'},
@@ -90,6 +86,13 @@ function getShopStock(level) {
 
 function nextTierItem(slot, currentTier) {
   return Object.values(ITEMS).find(i => i.slot === slot && i.tier === currentTier + 1) || null;
+}
+
+// ── HELPER: slot+tier label for display ─────────────────────────
+// Returns e.g. "MELEE · T2" or "CONSUMABLE" for use in shop and inventory
+function itemSlotLabel(item) {
+  if (!item.slot) return 'CONSUMABLE';
+  return `${item.slot.toUpperCase()} · T${item.tier}`;
 }
 
 // ── ENEMY POOL ───────────────────────────────────────────────────
@@ -158,8 +161,11 @@ function scaleEnemy(template, playerLevel) {
 }
 
 // ── PRIZE FIGHT ──────────────────────────────────────────────────
-const ROMAN_NAMES    = ['Maximus','Brutus','Octavian','Severus','Galba','Vitellius','Commodus','Caracalla','Aurelian'];
-const ROMAN_EPITHETS = ['the Butcher','the Relentless','Iron-Handed','Crimson Blade','the Merciless','Deathbringer','the Titan','Scourge of Rome'];
+// ROMAN_CHAMPION_SPRITES: how many champion_N.png files exist (1–N).
+// Using Math.ceil(Math.random() * N) gives a clean integer in [1, N].
+const ROMAN_CHAMPION_SPRITES = 10;
+const ROMAN_NAMES    = ['Maximus','Brutus','Octavian','Severus','Galba','Vitellius','Commodus','Caracalla','Aurelian','Cassius','Stylax','Jason','Grumio'];
+const ROMAN_EPITHETS = ['the Butcher','the Relentless','Iron-Handed','Crimson Blade','the Merciless','Deathbringer','the Titan','Scourge of Rome','the Landlord'];
 
 function generatePrizeFight(player) {
   const name    = ROMAN_NAMES[Math.floor(Math.random() * ROMAN_NAMES.length)];
@@ -170,10 +176,12 @@ function generatePrizeFight(player) {
   const atk     = Math.floor(player.atk * ratio * 0.92);
   const def     = Math.floor(player.def * ratio * 0.80);
   const hasRanged = Math.random() > 0.5;
+  // Math.ceil gives a clean integer in [1, ROMAN_CHAMPION_SPRITES]
+  const spriteNum = Math.ceil(Math.random() * ROMAN_CHAMPION_SPRITES);
   return {
     id: 'prize_fighter',
     name: `${name} ${epithet}`,
-    sprite: 'champion',
+    sprite: `champion_${spriteNum}`,
     hp, maxHp: hp, atk, def,
     spd: 3 + Math.floor(Math.random() * 3),
     prefRange: hasRanged ? 20 : 0,
@@ -384,7 +392,6 @@ class CombatEngine {
     this.onEnd    = null;
   }
 
-  // start() sets enemy BEFORE setupCombat() calls refreshCombat()
   start(enemy) {
     this.enemy    = {...enemy};
     this.distance = 10;
@@ -398,7 +405,6 @@ class CombatEngine {
     this.playerTurn = this.player.spd >= this.enemy.spd;
     UI.log(`⚔ ${this.player.name} vs ${this.enemy.name}! Distance: ${this.distance} ft.`, 'system');
     UI.log(`${this.playerTurn ? this.player.name : this.enemy.name} acts first.`, 'system');
-    // setupCombat() calls refreshCombat() after us — no call needed here
     if (!this.playerTurn) this._delayEnemy();
   }
 
@@ -774,6 +780,16 @@ const AvatarRenderer = {
   },
 };
 
+// ── SHOP TOOLTIP HELPER ──────────────────────────────────────────
+// Returns a tooltip string for a shop item describing what the player
+// currently has equipped in the same slot (or nothing).
+function shopTooltip(item, player) {
+  if (!item.slot || item.type !== 'equipment') return item.desc;
+  const eq = player.equipped[item.slot];
+  if (!eq) return `${item.desc}\nSlot: ${item.slot.toUpperCase()} · T${item.tier}\nCurrently equipped: — nothing`;
+  return `${item.desc}\nSlot: ${item.slot.toUpperCase()} · T${item.tier}\nCurrently equipped: ${eq.icon} ${eq.name} (${eq.desc})`;
+}
+
 // ── CENTRAL UI OBJECT ─────────────────────────────────────────────
 const UI = {
   _fromScreen: 'select',
@@ -945,7 +961,6 @@ const UI = {
     }
   },
 
-  // setupCombat called AFTER combat.start() so enemy is guaranteed non-null
   setupCombat(player, enemy) {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     set('cb-pname',  player.name);
@@ -959,7 +974,6 @@ const UI = {
     this.refreshCombat();
   },
 
-  // Null guard: enemy may be null if called before start()
   refreshCombat() {
     const ce = G.combat;
     if (!ce || !ce.enemy) return;
@@ -1107,7 +1121,6 @@ const UI = {
     const banner  = document.getElementById('post-result');
     const rewards = document.getElementById('post-rewards');
 
-    // storeOnly must never fall into the defeat branch
     if (result.storeOnly) {
       banner.textContent = '🏪 ARMOURY';
       banner.className = 'result-banner res-fled';
@@ -1173,6 +1186,7 @@ const UI = {
     this.renderSell(player);
   },
 
+  // ── V3.2: slot+tier label + equipped tooltip on shop rows ────────
   renderShop(player) {
     const goldEl = document.getElementById('post-gold');
     if (goldEl) goldEl.textContent = `Gold: ${player.gold}g`;
@@ -1180,11 +1194,17 @@ const UI = {
     if (!list) return;
     list.innerHTML = '';
     G.shop.stock.forEach(item => {
+      const slotLabel = itemSlotLabel(item);
+      const tooltip   = shopTooltip(item, player);
       const row = document.createElement('div');
       row.className = 'shop-row';
+      // title attribute = native browser tooltip on hover
+      row.title = tooltip;
       row.innerHTML = `
         <div class="shop-row-info">
-          <div class="shop-row-name">${item.icon||''} ${item.name}</div>
+          <div class="shop-row-name">${item.icon||''} ${item.name}
+            <span class="item-slot-tag">${slotLabel}</span>
+          </div>
           <div class="shop-row-desc">${item.desc}</div>
         </div>
         <span class="shop-row-price">${item.price}g</span>
@@ -1208,12 +1228,15 @@ const UI = {
       return;
     }
     player.inventory.forEach(({item, qty}) => {
-      const price = Math.max(1, Math.floor((item.price||0) * 0.10));
+      const price    = Math.max(1, Math.floor((item.price||0) * 0.10));
+      const slotLabel = itemSlotLabel(item);
       const row = document.createElement('div');
       row.className = 'shop-row';
       row.innerHTML = `
         <div class="shop-row-info">
-          <div class="shop-row-name">${item.icon||''} ${item.name}</div>
+          <div class="shop-row-name">${item.icon||''} ${item.name}
+            <span class="item-slot-tag">${slotLabel}</span>
+          </div>
           <div class="shop-row-desc">x${qty}</div>
         </div>
         <span class="shop-row-price">${price}g</span>
@@ -1228,6 +1251,7 @@ const UI = {
     });
   },
 
+  // ── V3.2: slot+tier label on inventory bag rows ──────────────────
   renderInventory(player) {
     const slotLabels = {melee:'MELEE',ranged:'RANGED',armor:'ARMOR',helm:'HELM',shield:'SHIELD',boots:'BOOTS'};
     const equipEl = document.getElementById('inv-equip');
@@ -1272,11 +1296,13 @@ const UI = {
         bagEl.innerHTML = '<div style="color:var(--tx2);font-size:15px;padding:8px;">Bag is empty.</div>';
       } else {
         player.inventory.forEach(({item, qty}) => {
+          const slotLabel = itemSlotLabel(item);
           const row = document.createElement('div');
           row.className = 'bag-row';
           row.innerHTML = `
-            <span class="bag-row-name">${item.icon||''} ${item.name}</span>
-            <span class="bag-row-type">${item.slot ? item.slot.toUpperCase() : 'CONSUMABLE'}</span>
+            <span class="bag-row-name">${item.icon||''} ${item.name}
+              <span class="item-slot-tag">${slotLabel}</span>
+            </span>
             <span class="bag-row-qty">x${qty}</span>
           `;
           if (item.slot) {
@@ -1449,7 +1475,6 @@ const G = {
     UI.show('select');
   },
 
-  // Correct order: clear log → start() → setupCombat() → show()
   selectEnemy(idx) {
     const enemy = this.currentEnemies[idx];
     this.lastEnemy = enemy;
@@ -1457,8 +1482,8 @@ const G = {
     this.combat.onEnd = (result) => this.onBattleEnd(result);
     const logEl = document.getElementById('log-body');
     if (logEl) logEl.innerHTML = '';
-    this.combat.start(enemy);         // sets G.combat.enemy
-    UI.setupCombat(this.player, enemy); // safe to call refreshCombat now
+    this.combat.start(enemy);
+    UI.setupCombat(this.player, enemy);
     UI.show('combat');
   },
 
