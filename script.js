@@ -75,8 +75,8 @@ function getShopStock(level) {
   };
   let pool = [...always];
   if (tier === 1) pool = [...pool, ...(byTier[1] || [])];
-  if (tier >= 2)  pool = [...pool, ...(byTier[1] || []), ...(byTier[2] || [])];
-  if (tier >= 3)  pool = [...pool, ...(byTier[2] || []), ...(byTier[3] || [])];
+  if (tier === 2)  pool = [...pool, ...(byTier[1] || []), ...(byTier[2] || [])];
+  if (tier === 3)  pool = [...pool, ...(byTier[2] || []), ...(byTier[3] || [])];
   if (tier >= 4)  pool = [...pool, ...(byTier[3] || []), ...(byTier[4] || [])];
   return pool.filter(id => {
     const it = ITEMS[id];
