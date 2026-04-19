@@ -122,10 +122,10 @@ const ENEMY_POOL = [
   // Tier 4
   {id:'elite_praetorian', name:'Elite Praetorian',      sprite:'t4_elite_praetorian', tier:4, bHp:220, atk:36, def:22, spd:4, prefRange:0,  hasRanged:false, xp:150,gold:120,diff:'easy'},
   {id:'persian_immortal', name:'Persian Immortal',      sprite:'t4_persian_immortal', tier:4, bHp:240, atk:38, def:24, spd:3, prefRange:0,  hasRanged:false, xp:160,gold:125,diff:'easy'},
-  {id:'numidian_warlord', name:'Numidian Warlord',      sprite:'t4_numidian_warlord', tier:4, bHp:270, atk:40, def:20, spd:5, prefRange:30, hasRanged:true,  xp:180,gold:140,diff:'avg'},
-  {id:'greek_champion',   name:'Greek Champion',        sprite:'t4_greek_champion',   tier:4, bHp:260, atk:38, def:22, spd:4, prefRange:0,  hasRanged:false, xp:175,gold:138,diff:'avg'},
-  {id:'shadow_assassin',  name:'Shadow Assassin',       sprite:'t4_shadow_assassin',  tier:4, bHp:200, atk:44, def:16, spd:8, prefRange:20, hasRanged:true,  xp:170,gold:135,diff:'hard'},
-  {id:'titan_warrior',    name:'Titan Warrior',         sprite:'t4_titan_warrior',    tier:4, bHp:320, atk:42, def:24, spd:2, prefRange:0,  hasRanged:false, xp:200,gold:160,diff:'hard'},
+  {id:'giant_scorpion',   name:'Giant Scorpion',        sprite:'t4_giant_scorpion',   tier:4, bHp:270, atk:40, def:20, spd:5, prefRange:30, hasRanged:true,  xp:180,gold:140,diff:'avg'},
+  {id:'armored_lion',     name:'Armored Lion',          sprite:'t4_armored_lion',     tier:4, bHp:260, atk:38, def:22, spd:4, prefRange:0,  hasRanged:false, xp:175,gold:138,diff:'avg'},
+  {id:'boris',            name:'Boris',                 sprite:'t4_boris',            tier:4, bHp:200, atk:44, def:16, spd:8, prefRange:20, hasRanged:true,  xp:170,gold:135,diff:'hard'},
+  {id:'unchained_bear',   name:'Unchained Bear',        sprite:'t4_unchained_bear',    tier:4, bHp:320, atk:42, def:24, spd:2, prefRange:0,  hasRanged:false, xp:200,gold:160,diff:'hard'},
 ];
 
 function tierForLevel(level) {
@@ -163,7 +163,7 @@ function scaleEnemy(template, playerLevel) {
 // ── PRIZE FIGHT ──────────────────────────────────────────────────
 // ROMAN_CHAMPION_SPRITES: how many champion_N.png files exist (1–N).
 // Using Math.ceil(Math.random() * N) gives a clean integer in [1, N].
-const ROMAN_CHAMPION_SPRITES = 10;
+const ROMAN_CHAMPION_SPRITES = 8;
 const ROMAN_NAMES    = ['Maximus','Brutus','Octavian','Severus','Galba','Vitellius','Commodus','Caracalla','Aurelian','Cassius','Stylax','Jason','Grumio'];
 const ROMAN_EPITHETS = ['the Butcher','the Relentless','Iron-Handed','Crimson Blade','the Merciless','Deathbringer','the Titan','Scourge of Rome','the Landlord'];
 
