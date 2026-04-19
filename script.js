@@ -691,93 +691,539 @@ const Save = {
   },
 };
 
-// ── CANVAS AVATAR ─────────────────────────────────────────────────
+// ── CANVAS AVATAR — SNES-style layered sprite renderer ────────────
+// 16×24 pixel grid. Layers drawn bottom→top: base body, legs/boots,
+// torso armor, shield arm, weapon hand, helm. Male/female differ in
+// silhouette, shoulder width, hip shape, hair, and face proportions.
+// Each equipment piece has its own pixel art definition.
+// Color palette is SNES-era: saturated midtones, bright highlights,
+// deep outlines. No floating emoji — weapon is drawn as pixel art.
 const AvatarRenderer = {
+
+  // ── SKIN PALETTE ──────────────────────────────────────────────────
+  // Each skin has 4 tones: hi (highlight), md (midtone/base), sh (shadow), dk (deep shadow/outline)
+  _skin(key) {
+    const p = {
+      ivory: { hi:'#FDEEC8', md:'#F5DEB3', sh:'#C8A06A', dk:'#8B5A2B' },
+      tan:   { hi:'#E8C090', md:'#D2A679', sh:'#A07040', dk:'#6A3E18' },
+      olive: { hi:'#CCA06A', md:'#B8864E', sh:'#886030', dk:'#503010' },
+      brown: { hi:'#A87050', md:'#8B5E3C', sh:'#5E3A1C', dk:'#301808' },
+      deep:  { hi:'#6A4428', md:'#4A2C0A', sh:'#2A1400', dk:'#100800' },
+    };
+    return p[key] || p.ivory;
+  },
+
+  // ── OUTLINE helper (darkens any hex by 55%) ──────────────────────
+  _dk(hex) {
+    if (!hex || hex[0]!=='#') return '#111';
+    const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    return `rgb(${Math.floor(r*.45)},${Math.floor(g*.45)},${Math.floor(b*.45)})`;
+  },
+  _hi(hex) {
+    const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    return `rgb(${Math.min(255,Math.floor(r*1.35))},${Math.min(255,Math.floor(g*1.35))},${Math.min(255,Math.floor(b*1.35))})`;
+  },
+
+  // ── MASTER DRAW ───────────────────────────────────────────────────
   draw(canvasId, player, px = 8) {
     const cv = document.getElementById(canvasId);
     if (!cv) return;
     const ctx = cv.getContext('2d');
     ctx.clearRect(0, 0, cv.width, cv.height);
 
-    const sk = SKIN[player.skin] || SKIN.ivory;
-    const eq = player.equipped || {};
-    const helmc   = this._helmColor(eq.helm);
-    const armorc  = this._armorColor(eq.armor);
-    const shieldc = this._shieldColor(eq.shield);
-    const bootsc  = this._bootsColor(eq.boots);
-    const weaponItem = player.lastAttackType === 'ranged' ? eq.ranged : eq.melee;
+    const sk  = this._skin(player.skin || 'ivory');
+    const eq  = player.equipped || {};
+    const isFemale = (player.gender === 'female');
 
-    const G = [
-      [0,0,0,'H','H','H','H','H','H',0,0],
-      [0,0,'H','H','H','H','H','H','H','H',0],
-      [0,'h','h','F','F','F','F','F','F','h',0],
-      [0,'h','F','F','F','F','F','F','F','h',0],
-      [0,'h','F','e','F','F','F','e','F','h',0],
-      [0,'h','F','F','F','F','F','F','F','h',0],
-      [0,0,'F','F','F','F','F','F','F',0,0],
-      [0,0,0,'F','F','F','F','F',0,0,0],
-      [0,'S','A','A','A','A','A','A','A','S',0],
-      ['S','A','A','A','A','A','A','A','A','A','W'],
-      ['S','A','A','a','A','A','A','a','A','A','W'],
-      ['S','A','b','b','b','b','b','b','b','A','W'],
-      [0,'A','A','A','A','A','A','A','A','A',0],
-      [0,'A','A','A','A','A','A','A','A','A',0],
-      [0,0,'L','L','L',0,'L','L','L',0,0],
-      [0,0,'L','L','L',0,'L','L','L',0,0],
-      [0,0,'G','G','G',0,'G','G','G',0,0],
-      [0,'B','B','B','B',0,'B','B','B','B',0],
-    ];
+    // Resolve palette entries for each equipment slot
+    const helm   = this._helmPal(eq.helm);
+    const armor  = this._armorPal(eq.armor);
+    const shield = this._shieldPal(eq.shield);
+    const boots  = this._bootsPal(eq.boots);
+    const melee  = this._meleePal(eq.melee);
+    const ranged = this._rangedPal(eq.ranged);
+    const weapon = (player.lastAttackType === 'ranged' && ranged) ? ranged : (melee || null);
 
-    const colorMap = {
-      'H': helmc || sk.dark,
-      'h': helmc ? this._darken(helmc) : sk.dark,
-      'F': sk.base, 'e': '#1A1008',
-      'S': shieldc || '#4A6888',
-      'A': armorc, 'a': this._darken(armorc),
-      'b': '#2A1808',
-      'W': weaponItem ? '#A0A0A0' : sk.mid,
-      'L': sk.mid, 'G': '#909090', 'B': bootsc,
-    };
+    // Build the color lookup for all named keys in the layers
+    const C = this._buildColorMap(sk, helm, armor, shield, boots, weapon, isFemale);
 
-    G.forEach((row, ri) => {
-      row.forEach((cell, ci) => {
-        if (!cell || cell === 0) return;
-        ctx.fillStyle = colorMap[cell] || '#FF00FF';
-        ctx.fillRect(ci*px, ri*px, px, px);
-        ctx.fillStyle = 'rgba(0,0,0,0.18)';
-        ctx.fillRect(ci*px, ri*px+px-1, px, 1);
-        ctx.fillRect(ci*px+px-1, ri*px, 1, px);
-      });
-    });
+    // Get ordered layers for this gender
+    const layers = isFemale
+      ? this._layersFemale(eq, helm, armor, shield, boots, weapon)
+      : this._layersMale(eq, helm, armor, shield, boots, weapon);
 
-    if (weaponItem) {
-      ctx.font = `${px*2.2}px serif`;
-      ctx.textAlign = 'left';
-      const wx = 11*px+2, wy = 9*px+px*2;
-      if (wx < cv.width) ctx.fillText(weaponItem.icon || '⚔', wx, wy);
+    // Render layers bottom to top
+    for (const layer of layers) {
+      this._renderLayer(ctx, layer, C, px);
     }
   },
 
-  _helmColor(item) {
+  _renderLayer(ctx, grid, C, px) {
+    for (let ri = 0; ri < grid.length; ri++) {
+      for (let ci = 0; ci < grid[ri].length; ci++) {
+        const cell = grid[ri][ci];
+        if (!cell || cell === 0) continue;
+        const color = C[cell];
+        if (!color) continue;
+        ctx.fillStyle = color;
+        ctx.fillRect(ci*px, ri*px, px, px);
+      }
+    }
+  },
+
+  // ── COLOR MAP ─────────────────────────────────────────────────────
+  _buildColorMap(sk, helm, armor, shield, boots, weapon, isFemale) {
+    const hair = isFemale
+      ? { H:'#8B3A10', h:'#C05020', q:'#5A1E06' }   // warm auburn
+      : { H:'#3A2810', h:'#6A4820', q:'#1A1006' };   // dark brown
+
+    return {
+      // Skin
+      'Fi': sk.hi,  // face/body highlight
+      'Fm': sk.md,  // face/body midtone
+      'Fs': sk.sh,  // face/body shadow
+      'Fd': sk.dk,  // deep shadow / outline
+      // Eyes
+      'Ew': '#E8E0D0',  // eye white
+      'Ep': '#1A0C04',  // pupil
+      'Eb': '#3A2010',  // eyebrow
+      // Lips
+      'Li': '#C05050',  // lips (female) / not used male
+      // Hair
+      'Hh': hair.h,  // highlight
+      'Hm': hair.H,  // mid
+      'Hd': hair.q,  // shadow
+      // Armor
+      'Ah': armor ? armor.hi  : sk.sh,
+      'Am': armor ? armor.md  : sk.sh,
+      'As': armor ? armor.sh  : sk.dk,
+      'Ad': armor ? armor.dk  : sk.dk,
+      // Belt
+      'Be': '#3A2008',
+      'Bk': '#C89020',  // buckle gold
+      // Undergarment / loin cloth
+      'Uc': '#8B6020',  // cloth
+      'Ud': '#5A3C10',  // cloth shadow
+      // Legs / bare skin
+      'Lm': sk.md,
+      'Ls': sk.sh,
+      'Ld': sk.dk,
+      // Boots
+      'Th': boots ? boots.hi : '#6A4828',
+      'Tm': boots ? boots.md : '#4A3018',
+      'Ts': boots ? boots.sh : '#2A1808',
+      'Td': boots ? boots.dk : '#100800',
+      // Shield
+      'Sh': shield ? shield.hi : '#6888A8',
+      'Sm': shield ? shield.md : '#4A6888',
+      'Ss': shield ? shield.sh : '#2A4060',
+      'Sd': shield ? shield.dk : '#102030',
+      'Sx': shield ? shield.xc : '#ECC840',  // boss/center
+      // Weapon
+      'Wh': weapon ? weapon.hi : sk.sh,
+      'Wm': weapon ? weapon.md : sk.sh,
+      'Ws': weapon ? weapon.sh : sk.dk,
+      'Wd': weapon ? weapon.dk : sk.dk,
+      'Wg': '#C8C8C8',  // grip/handle
+      'Wk': '#888880',  // grip shadow
+      // Helm
+      'Mh': helm ? helm.hi : null,
+      'Mm': helm ? helm.md : null,
+      'Ms': helm ? helm.sh : null,
+      'Md': helm ? helm.dk : null,
+      'Mv': helm ? helm.vs : null,  // visor/accent
+      // Outline (universal dark border)
+      'OO': '#0C0808',
+    };
+  },
+
+  // ── MALE LAYERS ──────────────────────────────────────────────────
+  // 16 wide × 24 tall.
+  // Reading the grid: columns 0-15 left to right.
+  // Shield on left arm (cols 0-3 at shoulder level), weapon on right (cols 12-15).
+  _layersMale(eq, helm, armor, shield, boots, weapon) {
+    const layers = [];
+
+    // 1. BASE BODY (skin, outline, bare areas)
+    layers.push([
+    //   0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15
+      [ 0,   0,   0,   0,  'OO','OO','OO','OO','OO','OO', 0,   0,   0,   0,   0,   0  ], // 0  hair top
+      [ 0,   0,   0,  'OO','Hm','Hm','Hm','Hm','Hm','Hm','OO', 0,   0,   0,   0,   0  ], // 1  hair
+      [ 0,   0,  'OO','Hh','Hm','Fm','Fi','Fi','Fm','Hm','Hd','OO', 0,   0,   0,   0  ], // 2  hair/face
+      [ 0,  'OO','Hd','Fm','Fm','Fi','Fi','Fi','Fi','Fm','Fm','Hd','OO', 0,   0,   0  ], // 3  face upper
+      [ 0,  'OO','Fm','Ew','Ep','Fi','Fi','Fi','Ep','Ew','Fm','Fm','OO', 0,   0,   0  ], // 4  eyes
+      [ 0,  'OO','Fm','Fm','Fs','Fm','Fm','Fm','Fs','Fm','Fm','Fm','OO', 0,   0,   0  ], // 5  nose/cheek
+      [ 0,  'OO','Fm','Fm','Fm','Fm','Fm','Fm','Fm','Fm','Fm','Fm','OO', 0,   0,   0  ], // 6  mouth
+      [ 0,   0,  'OO','Fs','Fm','Fm','Fm','Fm','Fm','Fm','Fs','OO', 0,   0,   0,   0  ], // 7  chin
+      [ 0,   0,   0,  'OO','Fs','Fm','Fm','Fm','Fm','Fs','OO', 0,   0,   0,   0,   0  ], // 8  neck
+      [ 0,   0,   0,  'OO','Fm','Fm','Fm','Fm','Fm','Fm','OO', 0,   0,   0,   0,   0  ], // 9  neck low
+      ['OO','OO','OO','OO','OO','OO','OO','OO','OO','OO','OO','OO','OO','OO', 0,   0  ], // 10 shoulder line
+      ['Fm','Fm','Fm','Fm','Lm','Lm','Lm','Lm','Lm','Lm','Fm','Fm','Fm','Fm','OO', 0  ], // 11 upper arms
+      ['Fs','Fm','Fm','Lm','Lm','Lm','Lm','Lm','Lm','Lm','Fm','Fm','Fm','Fm','OO', 0  ], // 12 arms/torso
+      ['Fs','Fs','Lm','Lm','Lm','Lm','Lm','Lm','Lm','Lm','Lm','Fm','Fm','Fm','OO', 0  ], // 13 arms
+      ['OO','Fs','Lm','Lm', 0,   0,   0,   0,   0,  'Lm','Lm','Fs','Fs','Fm','OO', 0  ], // 14 forearms
+      [ 0,  'OO','Ld','Lm', 0,   0,   0,   0,   0,  'Lm','Ls','Ld','Ls','Fs','OO', 0  ], // 15 wrists
+      // Legs
+      [ 0,   0,  'OO','OO','OO', 0,   0,   0,   0,  'OO','OO','OO', 0,   0,   0,   0  ], // 16 hip join
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 17 upper leg
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 18 upper leg
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 19 knee
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 20 shin
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 21 shin
+      // Boots
+      [ 0,   0,  'OO','Tm','Ts','OO', 0,   0,  'OO','Tm','Ts','OO', 0,   0,   0,   0  ], // 22 boot top
+      [ 0,  'OO','Th','Tm','Ts','Td','OO','OO','Td','Tm','Ts','Td','OO', 0,   0,   0  ], // 23 boot sole
+    ]);
+
+    // 2. ARMOR LAYER (draws over bare skin on torso/shoulder area)
+    layers.push([
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 0
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 1
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 2
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 3
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 4
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 5
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 6
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 7
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 8
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 9
+      // shoulder epaulettes wide for male
+      ['OO','OO','Ah','Ah','Ah','OO','OO','OO','OO','Ah','Ah','Ah','OO','OO', 0,   0  ], // 10
+      ['Am','Am','Ah','Am','Am','Am','Am','Am','Am','Am','Am','Ah','Am','Am','OO', 0  ], // 11
+      ['Am','Am','Am','Am','Am','Ah','Am','Am','Ah','Am','Am','Am','Am','Am','OO', 0  ], // 12
+      ['As','Am','Am','Am','Am','Am','Am','Am','Am','Am','Am','Am','Am','Am','OO', 0  ], // 13 
+      ['OO','As','Am','Am', 0,   0,   0,   0,   0,  'Am','Am','As','As','Am','OO', 0  ], // 14
+      // belt
+      [ 0,  'OO','Be','Be', 0,   0,   0,   0,   0,  'Be','Be','Be','Be','Be','OO', 0  ], // 15
+      // skirt/loincloth rows
+      [ 0,   0,  'OO','Uc','Uc', 0,   0,   0,   0,  'Uc','Uc','OO', 0,   0,   0,   0  ], // 16
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 17
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 18
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 19
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 20
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 21
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 22
+      [ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0  ], // 23
+    ]);
+
+    // 3. SHIELD LAYER (left arm, cols 0-3)
+    if (shield) {
+      layers.push([
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 0
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 1
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 2
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 3
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 4
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 5
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 6
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 7
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 8
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 9
+        ['OO','Sm','Sh','OO', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 10
+        ['Ss','Sm','Sh','Sd','OO', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 11
+        ['Ss','Sx','Sm','Sh','OO', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 12
+        ['Ss','Sm','Sm','Sh','OO', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 13
+        ['OO','Ss','Sd','OO', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 14
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 15
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 16
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 17
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 18
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 19
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 20
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 21
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 22
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 23
+      ]);
+    }
+
+    // 4. WEAPON LAYER (right hand, cols 12-15, rows 11-21)
+    if (weapon) {
+      layers.push(this._weaponLayerMale(weapon));
+    }
+
+    // 5. HELM LAYER (drawn on top of hair)
+    if (helm) {
+      layers.push(this._helmLayerMale(helm));
+    }
+
+    return layers;
+  },
+
+  // ── FEMALE LAYERS ─────────────────────────────────────────────────
+  _layersFemale(eq, helm, armor, shield, boots, weapon) {
+    const layers = [];
+
+    // 1. BASE BODY — female: narrower shoulders, longer hair, curvier silhouette
+    layers.push([
+    //   0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15
+      [ 0,   0,   0,   0,  'OO','Hm','Hm','Hm','Hm','Hm','OO', 0,   0,   0,   0,   0  ], // 0  hair top
+      [ 0,   0,   0,  'OO','Hh','Hm','Hm','Hm','Hm','Hm','Hd','OO', 0,   0,   0,   0  ], // 1  hair
+      [ 0,   0,  'OO','Hh','Hm','Fm','Fi','Fi','Fm','Hm','Hm','Hd','OO', 0,   0,   0  ], // 2  hair/face
+      [ 0,  'OO','Hd','Fm','Fi','Fi','Fi','Fi','Fi','Fm','Hm','Hm','Hd','OO', 0,   0  ], // 3  face
+      [ 0,  'OO','Fm','Ew','Ep','Fi','Fi','Fi','Ep','Ew','Fm','Hm','Hd','OO', 0,   0  ], // 4  eyes + hair side
+      [ 0,  'OO','Fm','Fm','Fs','Fm','Li','Fm','Fs','Fm','Fm','Hm','Hd','OO', 0,   0  ], // 5  lips + hair
+      [ 0,  'OO','Fm','Fm','Fm','Fs','Fm','Fs','Fm','Fm','Fm','Hm','Hd','OO', 0,   0  ], // 6  chin
+      [ 0,   0,  'OO','Fs','Fm','Fm','Fm','Fm','Fm','Fs','OO','Hm','Hd','OO', 0,   0  ], // 7  neck + long hair
+      [ 0,   0,   0,  'OO','Fs','Fm','Fm','Fm','Fs','OO','Hm','Hm','Hd','OO', 0,   0  ], // 8  neck + hair
+      [ 0,   0,   0,  'OO','Fm','Fm','Fm','Fm','Fm','OO','Hd','Hm','Hd','OO', 0,   0  ], // 9  neck low + hair
+      // Shoulders narrower than male
+      [ 0,  'OO','OO','OO','OO','OO','OO','OO','OO','OO','OO','OO','OO','OO', 0,   0  ], // 10 shoulder
+      [ 0,  'Fm','Fm','Fm','Lm','Lm','Lm','Lm','Lm','Fm','Fm','Fm','Fm','OO', 0,   0  ], // 11 upper arms
+      [ 0,  'Fs','Fm','Lm','Lm','Lm','Lm','Lm','Lm','Lm','Fm','Fm','Fm','OO', 0,   0  ], // 12 arms
+      [ 0,  'Fs','Lm','Lm','Lm','Lm','Lm','Lm','Lm','Lm','Lm','Fm','Fm','OO', 0,   0  ], // 13
+      ['OO','Fs','Lm','Lm', 0,   0,   0,   0,   0,  'Lm','Lm','Fs','Fs','OO', 0,   0  ], // 14
+      [ 0,  'OO','Ld','Lm', 0,   0,   0,   0,   0,  'Lm','Ls','Ld','Fs','OO', 0,   0  ], // 15
+      // Hips slightly wider
+      [ 0,   0,  'OO','OO','OO', 0,   0,   0,   0,  'OO','OO','OO', 0,   0,   0,   0  ], // 16 hip
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 17 leg
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 18
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 19
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 20
+      [ 0,   0,  'OO','Lm','Ls','OO', 0,   0,  'OO','Lm','Ls','OO', 0,   0,   0,   0  ], // 21
+      [ 0,   0,  'OO','Tm','Ts','OO', 0,   0,  'OO','Tm','Ts','OO', 0,   0,   0,   0  ], // 22 boot
+      [ 0,  'OO','Th','Tm','Ts','Td','OO','OO','Td','Tm','Ts','Td','OO', 0,   0,   0  ], // 23 boot sole
+    ]);
+
+    // 2. ARMOR LAYER — female fit: slightly narrower torso
+    layers.push([
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 0-9 head area (armor goes on body not head)
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      // Narrower pauldrons
+      [ 0,'OO','Ah','Ah','OO', 0,   0,   0,  'OO','Ah','Ah','OO', 0, 0, 0, 0], // 10
+      [ 0,'Am','Ah','Am','Am','Am','Am','Am','Am','Am','Ah','Am','OO', 0, 0, 0], // 11
+      [ 0,'As','Am','Am','Am','Ah','Am','Ah','Am','Am','Am','Am','OO', 0, 0, 0], // 12
+      [ 0,'As','Am','Am','Am','Am','Am','Am','Am','Am','Am','Am','OO', 0, 0, 0], // 13
+      ['OO','As','Am','Am', 0,   0,   0,   0,  'Am','Am','As','As','OO', 0, 0, 0], // 14
+      [ 0,'OO','Be','Be', 0,   0,  'Bk',  0,   0,  'Be','Be','OO', 0, 0, 0, 0], // 15 belt+buckle
+      [ 0,  0,'OO','Uc','Uc', 0,   0,   0,  'Uc','Uc','OO', 0, 0, 0, 0, 0], // 16 skirt
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ]);
+
+    // 3. SHIELD
+    if (shield) {
+      layers.push([
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        ['OO','Sm','Sh','OO',0,0,0,0,0,0,0,0,0,0,0,0],
+        ['Ss','Sm','Sh','Sd','OO',0,0,0,0,0,0,0,0,0,0,0],
+        ['Ss','Sx','Sm','Sh','OO',0,0,0,0,0,0,0,0,0,0,0],
+        ['Ss','Sm','Sm','Sh','OO',0,0,0,0,0,0,0,0,0,0,0],
+        ['OO','Ss','Sd','OO',0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      ]);
+    }
+
+    // 4. WEAPON
+    if (weapon) {
+      layers.push(this._weaponLayerFemale(weapon));
+    }
+
+    // 5. HELM
+    if (helm) {
+      layers.push(this._helmLayerFemale(helm));
+    }
+
+    return layers;
+  },
+
+  // ── WEAPON PIXEL ART ──────────────────────────────────────────────
+  // Weapon is held in right hand (cols 12-15 for male, 11-14 for female)
+  _weaponLayerMale(weapon) {
+    const t = weapon.type_tag || 'sword';
+    // 16x24 all-zero base
+    const g = Array.from({length:24},()=>Array(16).fill(0));
+    if (t === 'sword' || t === 'blade') {
+      // Sword: blade goes upward from hand at rows 7-14, col 13-14
+      [[7,'Wh'],[8,'Wm'],[9,'Wm'],[10,'Wh'],[11,'Ws'],[12,'Ws'],[13,'Wg'],[14,'Wk']].forEach(([r,c])=>{g[r][13]=c;});
+      g[7][14]='Wh'; g[8][14]='Wm'; g[9][14]='Ws'; g[10][14]='Ws';
+      g[11][14]='Wg'; g[12][14]='Wg'; g[13][14]='Wk'; g[14][14]='Wk';
+      g[6][13]='Wh'; g[6][14]='Wm'; // tip
+      g[13][12]='Wg'; g[14][12]='Wk'; // crossguard
+    } else if (t === 'axe') {
+      // Axe head: wider, rows 7-12
+      g[7][12]='Wm'; g[7][13]='Wh'; g[7][14]='Wm';
+      g[8][12]='Wh'; g[8][13]='Wh'; g[8][14]='Ws';
+      g[9][13]='Wm'; g[9][14]='Ws';
+      g[10][13]='Wm'; g[10][14]='Ws';
+      g[11][13]='Wg'; g[12][13]='Wg'; g[13][13]='Wk'; g[14][13]='Wk';
+    } else if (t === 'hammer') {
+      g[7][12]='Wm'; g[7][13]='Wm'; g[7][14]='Ws';
+      g[8][12]='Wh'; g[8][13]='Wh'; g[8][14]='Wm';
+      g[9][12]='Wm'; g[9][13]='Wm'; g[9][14]='Ws';
+      g[10][13]='Wg'; g[11][13]='Wg'; g[12][13]='Wg'; g[13][13]='Wk';
+    } else if (t === 'fist') {
+      // Fist/glove
+      g[13][12]='Fm'; g[13][13]='Fm'; g[14][12]='Fs'; g[14][13]='Fd';
+    } else if (t === 'bow') {
+      // Short bow: arc on right side
+      g[7][15]='Wm'; g[8][15]='Wm'; g[9][15]='Wh';
+      g[10][15]='Wm'; g[11][15]='Wm'; g[12][15]='Wm';
+      g[13][15]='Wm'; g[14][15]='Wm';
+      // string
+      g[8][14]='Wd'; g[10][14]='Wd'; g[12][14]='Wd';
+    } else if (t === 'knife') {
+      g[11][13]='Wh'; g[12][13]='Wm'; g[13][13]='Ws'; g[10][14]='Wh'; g[11][14]='Wm';
+    } else if (t === 'trident') {
+      g[6][13]='Wh'; g[7][12]='Wm'; g[7][13]='Wh'; g[7][14]='Wm';
+      g[8][13]='Wm'; g[9][13]='Wm'; g[10][13]='Wg'; g[11][13]='Wg'; g[12][13]='Wk';
+    } else if (t === 'pilum') {
+      g[6][13]='Wh'; g[7][13]='Wm'; g[8][13]='Wm';
+      g[9][13]='Wg'; g[10][13]='Wg'; g[11][13]='Wg'; g[12][13]='Wk'; g[13][13]='Wk';
+    } else if (t === 'bolt') {
+      g[7][14]='Wh'; g[8][13]='Wm'; g[9][13]='Wm'; g[10][13]='Wg'; g[11][13]='Wg'; g[12][13]='Wk';
+      // crossbow shape
+      g[10][12]='Wd'; g[10][14]='Wd';
+    }
+    return g;
+  },
+
+  _weaponLayerFemale(weapon) {
+    // Same weapon art but shifted left 1 col (cols 11-14)
+    const base = this._weaponLayerMale(weapon);
+    return base.map(row => {
+      const nr = Array(16).fill(0);
+      for (let c = 1; c < 16; c++) nr[c-1] = row[c];
+      return nr;
+    });
+  },
+
+  // ── HELM PIXEL ART ────────────────────────────────────────────────
+  _helmLayerMale(helm) {
+    const t = helm.type_tag || 'iron';
+    const g = Array.from({length:24},()=>Array(16).fill(0));
+    if (t === 'iron') {
+      // Iron helm: simple cap over head rows 0-3
+      g[0][4]='Mm'; g[0][5]='Mh'; g[0][6]='Mh'; g[0][7]='Mh'; g[0][8]='Mm';
+      g[1][3]='Mm'; g[1][4]='Mh'; g[1][5]='Mh'; g[1][6]='Mh'; g[1][7]='Mh'; g[1][8]='Mh'; g[1][9]='Ms';
+      g[2][3]='Ms'; g[2][4]='Mm'; g[2][5]='Mh'; g[2][6]='Mh'; g[2][7]='Mh'; g[2][8]='Mm'; g[2][9]='Ms';
+      g[3][3]='Ms'; g[3][4]='Mm'; g[3][5]='Mh'; g[3][9]='Mm';
+    } else if (t === 'galea') {
+      // Bronze galea: crest on top
+      g[0][5]='Mv'; g[0][6]='Mv'; g[0][7]='Mv';
+      g[1][4]='Mm'; g[1][5]='Mh'; g[1][6]='Mh'; g[1][7]='Mh'; g[1][8]='Ms';
+      g[2][3]='Ms'; g[2][4]='Mm'; g[2][5]='Mh'; g[2][6]='Mh'; g[2][7]='Mm'; g[2][8]='Ms';
+      g[3][3]='Ms'; g[3][4]='Mm'; g[3][5]='Mh'; g[3][9]='Mm';
+      g[4][3]='Md'; g[4][9]='Md'; // cheek guards
+    } else if (t === 'imperial') {
+      // Imperial: full coverage, visor strip
+      g[0][4]='Mh'; g[0][5]='Mh'; g[0][6]='Mv'; g[0][7]='Mh'; g[0][8]='Mh';
+      g[1][3]='Mm'; g[1][4]='Mh'; g[1][5]='Mh'; g[1][6]='Mh'; g[1][7]='Mh'; g[1][8]='Mh'; g[1][9]='Ms';
+      g[2][3]='Mm'; g[2][4]='Mh'; g[2][5]='Mv'; g[2][6]='Mv'; g[2][7]='Mh'; g[2][8]='Mm'; g[2][9]='Ms';
+      g[3][3]='Ms'; g[3][4]='Mm'; g[3][5]='Mm'; g[3][6]='Mm'; g[3][7]='Mm'; g[3][8]='Ms'; g[3][9]='Md';
+      g[4][3]='Md'; g[4][9]='Md'; g[4][4]='Mm'; g[4][8]='Ms';
+    } else if (t === 'centurion') {
+      // Centurion: tall crest
+      g[0][5]='Mv'; g[0][6]='Mv'; g[0][7]='Mv';
+      g[1][5]='Mv'; g[1][6]='Mv'; g[1][7]='Mv';
+      g[2][4]='Mm'; g[2][5]='Mh'; g[2][6]='Mh'; g[2][7]='Mh'; g[2][8]='Ms';
+      g[3][3]='Ms'; g[3][4]='Mm'; g[3][5]='Mh'; g[3][6]='Mh'; g[3][7]='Mh'; g[3][8]='Ms'; g[3][9]='Md';
+      g[4][3]='Md'; g[4][4]='Mm'; g[4][5]='Mh'; g[4][8]='Ms'; g[4][9]='Md';
+    }
+    return g;
+  },
+
+  _helmLayerFemale(helm) {
+    // Same helm but female face is 1px narrower — shift slightly
+    return this._helmLayerMale(helm);
+  },
+
+  // ── EQUIPMENT PALETTES ────────────────────────────────────────────
+  // Each returns {hi, md, sh, dk, [xc, vs]} or null for bare/default
+
+  _helmPal(item) {
     if (!item) return null;
-    return {iron_helm:'#909090',bronze_galea:'#C87828',imperial_helm:'#C0A010',centurion_helm:'#C89428'}[item.id] || '#909090';
+    const p = {
+      iron_helm:      {hi:'#B8B8B8',md:'#888888',sh:'#505050',dk:'#202020',vs:'#606060',type_tag:'iron'},
+      bronze_galea:   {hi:'#E8A840',md:'#C87828',sh:'#804808',dk:'#302000',vs:'#F0C040',type_tag:'galea'},
+      imperial_helm:  {hi:'#E8D840',md:'#C0A010',sh:'#806808',dk:'#302800',vs:'#90D0FF',type_tag:'imperial'},
+      centurion_helm: {hi:'#F0B840',md:'#C89428',sh:'#805808',dk:'#302000',vs:'#E84040',type_tag:'centurion'},
+    };
+    const r = p[item.id];
+    if (r) r.type_tag = r.type_tag || 'iron';
+    return r || null;
   },
-  _armorColor(item) {
-    if (!item) return '#6B4F1A';
-    return {loin_cloth:'#8B6914',leather_vest:'#7B3A10',chain_mail:'#707070',lorica_segm:'#808090',plate_armor:'#909090'}[item.id] || '#707070';
+
+  _armorPal(item) {
+    // Returns armor palette. For armor we also encode visual style via type_tag.
+    if (!item) return {hi:'#A07850',md:'#7B5C30',sh:'#4A3010',dk:'#201408'};
+    const p = {
+      loin_cloth:   {hi:'#B89040',md:'#8B6920',sh:'#5A3C08',dk:'#201400'},
+      leather_vest: {hi:'#A05030',md:'#7B3A10',sh:'#4A1E08',dk:'#200800'},
+      chain_mail:   {hi:'#C8C8C0',md:'#909090',sh:'#505050',dk:'#202020'},
+      lorica_segm:  {hi:'#C0C0C8',md:'#8080A0',sh:'#404860',dk:'#101828'},
+      plate_armor:  {hi:'#D8D8E0',md:'#A0A0B8',sh:'#505868',dk:'#101828'},
+    };
+    return p[item.id] || {hi:'#B0B0B0',md:'#808090',sh:'#404050',dk:'#101020'};
   },
-  _shieldColor(item) {
+
+  _shieldPal(item) {
     if (!item) return null;
-    return {wooden_shield:'#8B6914',iron_shield:'#606070',scutum:'#800000',tower_shield:'#404040'}[item.id] || '#606060';
+    const p = {
+      wooden_shield: {hi:'#C09040',md:'#8B6920',sh:'#503C10',dk:'#201400',xc:'#C87020'},
+      iron_shield:   {hi:'#B0B0C0',md:'#707090',sh:'#303050',dk:'#101020',xc:'#909090'},
+      scutum:        {hi:'#C04040',md:'#900010',sh:'#500000',dk:'#200000',xc:'#F0D030'},
+      tower_shield:  {hi:'#707080',md:'#505060',sh:'#282830',dk:'#101018',xc:'#A09040'},
+    };
+    return p[item.id] || null;
   },
-  _bootsColor(item) {
-    if (!item) return '#3A2810';
-    return {sandals:'#C8A060',iron_greaves:'#808080',roman_greaves:'#909090',hermes_boots:'#C0A010'}[item.id] || '#808080';
+
+  _bootsPal(item) {
+    if (!item) return {hi:'#7A5038',md:'#4A3018',sh:'#281808',dk:'#100800'};
+    const p = {
+      sandals:      {hi:'#D8A860',md:'#C8A060',sh:'#806020',dk:'#302000'},
+      iron_greaves: {hi:'#C0C0C0',md:'#888888',sh:'#484848',dk:'#181818'},
+      roman_greaves:{hi:'#C8C8C8',md:'#909090',sh:'#505050',dk:'#202020'},
+      hermes_boots: {hi:'#F0D840',md:'#C0A010',sh:'#806800',dk:'#302800'},
+    };
+    return p[item.id] || {hi:'#8A6040',md:'#5A3C20',sh:'#302010',dk:'#100800'};
   },
-  _darken(hex) {
-    if (!hex || hex[0] !== '#' || hex.length < 7) return '#444';
-    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-    return `rgb(${Math.floor(r*0.7)},${Math.floor(g*0.7)},${Math.floor(b*0.7)})`;
+
+  _meleePal(item) {
+    if (!item) return {hi:'#A07850',md:'#7B5030',sh:'#4A2810',dk:'#201000',type_tag:'fist'};
+    const p = {
+      rusty_sword:     {hi:'#B08050',md:'#8B6030',sh:'#5A3010',dk:'#201000',type_tag:'sword'},
+      short_sword:     {hi:'#D0D0C0',md:'#A0A090',sh:'#606050',dk:'#202018',type_tag:'sword'},
+      gladius:         {hi:'#E0E0D0',md:'#B0B0A0',sh:'#606058',dk:'#202020',type_tag:'blade'},
+      battle_axe:      {hi:'#C0B0A0',md:'#908070',sh:'#503828',dk:'#201408',type_tag:'axe'},
+      war_hammer:      {hi:'#D0C8C0',md:'#A09890',sh:'#585050',dk:'#201818',type_tag:'hammer'},
+      champions_blade: {hi:'#F0E8D0',md:'#D0C0A0',sh:'#808060',dk:'#303020',type_tag:'blade'},
+      death_scythe:    {hi:'#D0C0B0',md:'#907060',sh:'#503828',dk:'#201408',type_tag:'blade'},
+    };
+    return p[item.id] || {hi:'#C0C0C0',md:'#909090',sh:'#505050',dk:'#202020',type_tag:'sword'};
+  },
+
+  _rangedPal(item) {
+    if (!item) return null;
+    const p = {
+      throwing_knife: {hi:'#D0C8B0',md:'#A09878',sh:'#605840',dk:'#202010',type_tag:'knife'},
+      short_bow:      {hi:'#C09850',md:'#906820',sh:'#503808',dk:'#201400',type_tag:'bow'},
+      trident:        {hi:'#D0D0C8',md:'#A0A098',sh:'#585850',dk:'#202018',type_tag:'trident'},
+      longbow:        {hi:'#C8A060',md:'#987030',sh:'#583808',dk:'#201400',type_tag:'bow'},
+      roman_pilum:    {hi:'#D0C8A0',md:'#A09870',sh:'#585838',dk:'#201810',type_tag:'pilum'},
+      siege_bolt:     {hi:'#C0B8A0',md:'#908870',sh:'#504838',dk:'#201810',type_tag:'bolt'},
+    };
+    return p[item.id] || null;
   },
 };
 
