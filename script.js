@@ -95,7 +95,6 @@ function nextTierItem(slot, currentTier) {
 // ── ENEMY POOL ───────────────────────────────────────────────────
 const ENEMY_POOL = [
   // Tier 1
-  {id:'sickly_goblin',    name:'Sickly Goblin',        sprite:'t1_sickly_goblin',    tier:1, bHp:55,  atk:12, def:3,  spd:3, prefRange:0,  hasRanged:false, xp:22, gold:14, diff:'easy'},
   {id:'mangy_dog',        name:'Mangy Dog',             sprite:'t1_mangy_dog',        tier:1, bHp:45,  atk:14, def:2,  spd:5, prefRange:0,  hasRanged:false, xp:18, gold:10, diff:'easy'},
   {id:'drunk_slave',      name:'Drunk Slave',           sprite:'t1_drunk_slave',      tier:1, bHp:65,  atk:11, def:4,  spd:2, prefRange:0,  hasRanged:false, xp:25, gold:18, diff:'easy'},
   {id:'burly_beggar',     name:'Burly Beggar',          sprite:'t1_burly_beggar',     tier:1, bHp:38,  atk:10, def:1,  spd:2, prefRange:0,  hasRanged:false, xp:16, gold:8,  diff:'easy'},
