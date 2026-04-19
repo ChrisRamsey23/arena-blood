@@ -75,8 +75,8 @@ function getShopStock(level) {
   };
   let pool = [...always];
   if (tier === 1) pool = [...pool, ...(byTier[1] || [])];
-  if (tier === 2)  pool = [...pool, ...(byTier[1] || []), ...(byTier[2] || [])];
-  if (tier === 3)  pool = [...pool, ...(byTier[2] || []), ...(byTier[3] || [])];
+  if (tier >= 2)  pool = [...pool, ...(byTier[1] || []), ...(byTier[2] || [])];
+  if (tier >= 3)  pool = [...pool, ...(byTier[2] || []), ...(byTier[3] || [])];
   if (tier >= 4)  pool = [...pool, ...(byTier[3] || []), ...(byTier[4] || [])];
   return pool.filter(id => {
     const it = ITEMS[id];
@@ -231,6 +231,7 @@ class Player {
     this.damageTaken   = 0;
     this.totalGold     = 50;
     this.wins          = 0;
+    this.mercies       = 0;
 
     this.isDefending    = false;
     this.buffAtk        = 0;
@@ -357,7 +358,7 @@ class Player {
       equipped:this.equipped, inventory:this.inventory,
       kills:this.kills, killsByEnemy:this.killsByEnemy,
       damageTaken:this.damageTaken, totalGold:this.totalGold,
-      wins:this.wins, lastAttackType:this.lastAttackType,
+      wins:this.wins, mercies:this.mercies, lastAttackType:this.lastAttackType,
     };
   }
 
@@ -372,7 +373,7 @@ class Player {
       inventory:o.inventory||[],
       kills:o.kills||0, killsByEnemy:o.killsByEnemy||{},
       damageTaken:o.damageTaken||0, totalGold:o.totalGold||50,
-      wins:o.wins||0, lastAttackType:o.lastAttackType||'melee',
+      wins:o.wins||0, mercies:o.mercies||0, lastAttackType:o.lastAttackType||'melee',
     });
     return p;
   }
@@ -1344,6 +1345,7 @@ const UI = {
         <td><strong>${c.name}</strong></td>
         <td>${c.level}</td>
         <td>${c.kills||0}</td>
+        <td>${c.mercies||0}</td>
         <td>${fav}</td>
         <td>${c.damageTaken||0}</td>
         <td>${c.totalGold||0}g</td>
@@ -1511,6 +1513,7 @@ const G = {
       if (leveled) setTimeout(() => UI.showLevelUp(this.player.level), 500);
     } else if (result.mercy && !result.executed) {
       this.player.fightNum++;
+      this.player.mercies++;
     } else {
       this.player.fightNum++;
     }
