@@ -1257,18 +1257,105 @@ const UI = {
     } else {
       badge.textContent = 'No active gladiator.';
     }
-    this._randomiseMenuSprites();
+    this._buildMenuSpriteBg();
   },
 
-  _randomiseMenuSprites() {
-    // Pick two distinct champion numbers from [1, ROMAN_CHAMPION_SPRITES]
-    const first  = Math.ceil(Math.random() * ROMAN_CHAMPION_SPRITES);
-    let   second = Math.ceil(Math.random() * ROMAN_CHAMPION_SPRITES);
-    while (second === first) second = Math.ceil(Math.random() * ROMAN_CHAMPION_SPRITES);
-    const imgL = document.getElementById('menu-sprite-left');
-    const imgR = document.getElementById('menu-sprite-right');
-    if (imgL) imgL.src = `assets/enemies/champion_${first}.png`;
-    if (imgR) imgR.src = `assets/enemies/champion_${second}.png`;
+  _buildMenuSpriteBg() {
+    // Collect all sprite filenames from enemy pool + champion pool
+    const enemySprites    = ENEMY_POOL.map(e => `assets/enemies/${e.sprite}.png`);
+    const championSprites = [];
+    for (let i = 1; i <= ROMAN_CHAMPION_SPRITES; i++) {
+      championSprites.push(`assets/enemies/champion_${i}.png`);
+    }
+    const allSprites = [...new Set([...enemySprites, ...championSprites])];
+
+    const container = document.getElementById('menu-sprite-bg');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const TILE_SIZE = 75;
+    const GAP       = 10;
+    const CELL      = TILE_SIZE + GAP;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const cols = Math.ceil(vw / CELL) + 1;
+    const rows = Math.ceil(vh / CELL) + 1;
+
+    // Build a 2-D grid of sprite srcs, enforcing no adjacency duplicates.
+    // For each cell we check the tile to the left (c-1) and the tile above (r-1)
+    // and pick a random sprite that matches neither.
+    const grid = []; // grid[r][c] = src string
+
+    // Fisher-Yates shuffle helper
+    const shuffle = arr => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    // Pick a random sprite that is not equal to any of the excluded srcs.
+    // Uses a shuffled copy of allSprites and returns the first non-excluded one.
+    const pickSprite = (excluded) => {
+      const pool = shuffle(allSprites);
+      for (const s of pool) {
+        if (!excluded.includes(s)) return s;
+      }
+      // Fallback: all sprites excluded (shouldn't happen with a large pool), just pick random
+      return allSprites[Math.floor(Math.random() * allSprites.length)];
+    };
+
+    for (let r = 0; r < rows; r++) {
+      grid[r] = [];
+      for (let c = 0; c < cols; c++) {
+        const excluded = [];
+        if (c > 0)          excluded.push(grid[r][c - 1]);   // left neighbour
+        if (r > 0)          excluded.push(grid[r - 1][c]);   // top neighbour
+        // Also exclude diagonal neighbours to reduce visual clustering
+        if (r > 0 && c > 0)           excluded.push(grid[r - 1][c - 1]); // top-left
+        if (r > 0 && c < cols - 1)    excluded.push(grid[r - 1][c + 1]); // top-right
+        grid[r][c] = pickSprite(excluded);
+      }
+    }
+
+    // Render the grid
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const src = grid[r][c];
+
+        // Alternate flip: flip if (col + row) is odd
+        const flipped = (c + r) % 2 === 1;
+
+        // Opacity: centre = 0.10, edges = 0.80 (horizontal gradient)
+        const cx       = vw / 2;
+        const tileX    = c * CELL + TILE_SIZE / 2;
+        const normDist = Math.abs(tileX - cx) / (vw / 2); // 0 at centre, 1 at edge
+        const opacity  = 0.10 + normDist * 0.70;          // 0.10 → 0.80
+
+        const img     = document.createElement('img');
+        img.src       = src;
+        img.draggable = false;
+        img.style.cssText = `
+          position: absolute;
+          left:   ${c * CELL}px;
+          top:    ${r * CELL}px;
+          width:  ${TILE_SIZE}px;
+          height: ${TILE_SIZE}px;
+          object-fit: contain;
+          image-rendering: pixelated;
+          opacity: ${opacity.toFixed(3)};
+          transform: scaleX(${flipped ? -1 : 1});
+          pointer-events: none;
+          user-select: none;
+        `;
+        img.onerror = () => { img.style.visibility = 'hidden'; };
+        container.appendChild(img);
+      }
+    }
   },
 
   renderLoadPrompt(c) {
