@@ -1261,14 +1261,14 @@ const UI = {
   },
 
   _randomiseMenuSprites() {
-    const pool = [...new Set(
-      ENEMY_POOL.filter(e => e.tier >= 1 && e.tier <= 3).map(e => e.sprite)
-    )];
-    const shuffled = pool.sort(() => Math.random() - 0.5);
+    // Pick two distinct champion numbers from [1, ROMAN_CHAMPION_SPRITES]
+    const first  = Math.ceil(Math.random() * ROMAN_CHAMPION_SPRITES);
+    let   second = Math.ceil(Math.random() * ROMAN_CHAMPION_SPRITES);
+    while (second === first) second = Math.ceil(Math.random() * ROMAN_CHAMPION_SPRITES);
     const imgL = document.getElementById('menu-sprite-left');
     const imgR = document.getElementById('menu-sprite-right');
-    if (imgL) imgL.src = `assets/enemies/${shuffled[0]}.png`;
-    if (imgR) imgR.src = `assets/enemies/${shuffled[1]}.png`;
+    if (imgL) imgL.src = `assets/enemies/champion_${first}.png`;
+    if (imgR) imgR.src = `assets/enemies/champion_${second}.png`;
   },
 
   renderLoadPrompt(c) {
